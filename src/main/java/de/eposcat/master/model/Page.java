@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Page {
-    private int id;
+    private long id;
     private String typeName;
     private Map<String, Attribute> attributes;
     
@@ -19,13 +19,13 @@ public class Page {
         typeName = pageName;
     }
     
-    public Page(int id, String typeName) {
+    public Page(long id, String typeName) {
         this();
         this.id = id;
         this.typeName = typeName;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
