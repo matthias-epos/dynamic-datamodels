@@ -5,12 +5,13 @@ import java.util.Map;
 
 public class Page {
     private long id;
+    //TODO make typeName mandatory
     private String typeName;
     private Map<String, Attribute> attributes;
     
     private Page() {
         id = -1;
-        attributes = new HashMap<String, Attribute>();
+        attributes = new HashMap<>();
     }
     
     public Page(String pageName) {
@@ -54,14 +55,14 @@ public class Page {
     
     @Override
     public String toString() {
-        String pageString = "Page #" + id;
-        pageString += "\n Type: " + typeName;
+        StringBuilder pageString = new StringBuilder("Page #" + id);
+        pageString.append("\n Type: ").append(typeName);
         for(String attributeName: attributes.keySet()) {
-            pageString += "\n" + attributeName;
-            pageString += ": " + attributes.get(attributeName).getValue();
+            pageString.append("\n").append(attributeName);
+            pageString.append(": ").append(attributes.get(attributeName).getValue());
         }
         
-        return pageString;
+        return pageString.toString();
     }
     
 }
