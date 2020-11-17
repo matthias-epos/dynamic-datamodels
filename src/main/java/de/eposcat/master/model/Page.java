@@ -2,6 +2,7 @@ package de.eposcat.master.model;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class Page {
     private long id;
@@ -14,10 +15,10 @@ public class Page {
         attributes = new HashMap<>();
     }
     
-    public Page(String pageName) {
+    public Page(String typeName) {
         this();
         
-        typeName = pageName;
+        this.typeName = typeName;
     }
     
     public Page(long id, String typeName) {
@@ -43,11 +44,14 @@ public class Page {
     public void addAttribute(String name, Attribute attribute) {
         attributes.put(name, attribute);
     }
+
+    public Attribute getAttribute(String attributeName) {
+        return attributes.get(attributeName);
+    }
     
     public void removeAttribute(String name) {
         attributes.remove(name);
     }
-
     
     public Map<String, Attribute> getAttributes() {
         return attributes;
@@ -64,5 +68,19 @@ public class Page {
         
         return pageString.toString();
     }
-    
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Page page = (Page) o;
+        return id == page.id &&
+                typeName.equals(page.typeName) &&
+                Objects.equals(attributes, page.attributes);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, typeName, attributes);
+    }
 }

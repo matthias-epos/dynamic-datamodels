@@ -1,18 +1,13 @@
 package de.eposcat.master;
 
-import java.nio.charset.Charset;
 import java.sql.SQLException;
-import java.util.Random;
 
-import de.eposcat.master.approachImpl.EAV_DatabaseAdapter;
 import de.eposcat.master.approachImpl.IDatabaseAdapter;
 import de.eposcat.master.approachImpl.JSON_Oracle_DatabaseAdapter;
-import de.eposcat.master.approachImpl.JSON_Postgres_DatabaseAdapter;
 import de.eposcat.master.connection.AbstractConnectionManager;
 import de.eposcat.master.connection.CustomOracleConnectionManager;
-import de.eposcat.master.connection.PostgresConnectionManager;
 import de.eposcat.master.connection.RelationalApproach;
-import de.eposcat.master.model.Attribute;
+import de.eposcat.master.model.AttributeBuilder;
 import de.eposcat.master.model.AttributeType;
 import de.eposcat.master.model.Page;
 
@@ -39,10 +34,10 @@ public class App
 
         Page page;
         try {
-//            page = dbAdapter.createPage("test");
-//            page.getAttributes().put("t8", new Attribute(AttributeType.String, "value1"));
-//            page.getAttributes().put("t9", new Attribute(AttributeType.String, "value2"));
-//            dbAdapter.updatePage(page);
+            page = dbAdapter.createPage("test");
+            page.getAttributes().put("t8", new AttributeBuilder().setType(AttributeType.String).setValue("").createAttribute());
+            page.getAttributes().put("t9", new AttributeBuilder().setType(AttributeType.String).setValue(null).createAttribute());
+            dbAdapter.updatePage(page);
 
 //            page = dbAdapter.loadPage(1);
 //            System.out.println(page);
@@ -51,19 +46,12 @@ public class App
 //                System.out.println(foundByAttPage);
 //            }
 
-            for(Page foundByValPage: dbAdapter.findPagesByAttributeValue("t9", "value2")) {
-                System.out.println(foundByValPage);
-            }
+//            for(Page foundByValPage: dbAdapter.findPagesByAttributeValue("t9", "value2")) {
+//                System.out.println(foundByValPage);
+//            }
         } catch (SQLException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-    }
-
-    public static String randomString() {
-        byte[] array = new byte[7];
-        new Random().nextBytes(array);
-
-        return new String(array, Charset.forName("UTF-8"));
     }
 }

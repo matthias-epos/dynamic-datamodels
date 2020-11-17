@@ -1,6 +1,7 @@
 package de.eposcat.master;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 public class AttributeTest {
 
@@ -15,7 +16,7 @@ public class AttributeTest {
 
     @Test
     public void changeAttributeValue(){
-        //fail on
+        //
 
         //Testcase for wrong Attributetype? -> Need logic in code which actually handles attribute type
     }

@@ -30,7 +30,7 @@ Currently, we inspect the capabilities of 2 databases:
 *Setup*
 
 [Download](https://www.postgresql.org/download/)  
-[SQL Commands](sql/postgre.sql)
+[SQL Commands](src/main/resources/sql/postgre.sql)
 
 
 #### Oracle
@@ -45,7 +45,7 @@ Currently, we inspect the capabilities of 2 databases:
 
 [Download Test Version 18c XE](https://www.oracle.com/database/technologies/xe-downloads.html)
 [Docker Container Test Version 18c XE Instructions](https://github.com/oracle/docker-images/tree/master/OracleDatabase/SingleInstance)  
-[SQL Commands](sql/oracle.sql)
+[SQL Commands](src/main/resources/sql/oracle.sql)
 
 <!-- 
 

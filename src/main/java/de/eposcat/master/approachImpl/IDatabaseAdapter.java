@@ -12,9 +12,9 @@ public interface IDatabaseAdapter {
     Page createPageWithAttributes(String typename, Map<String, Attribute> attributes) throws SQLException;
     void updatePage(Page page) throws SQLException;
 
-    Page loadPage(int pageId) throws SQLException;
+    Page loadPage(long pageId) throws SQLException;
 
-    List<Page> findPagesByType(String Type) throws SQLException;
-    List<Page> findPagesByAttribute(String AttributeName) throws SQLException;
-    List<Page> findPagesByAttributeValue(String AttributeName, Object value) throws SQLException;
+    List<Page> findPagesByType(String type) throws SQLException;
+    List<Page> findPagesByAttribute(String attributeName) throws SQLException;
+    List<Page> findPagesByAttributeValue(String attributeName, Object value) throws SQLException;
 }

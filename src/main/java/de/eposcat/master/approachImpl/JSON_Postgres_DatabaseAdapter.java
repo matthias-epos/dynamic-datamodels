@@ -65,9 +65,9 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     @Override
-    public Page loadPage(int pageId) throws SQLException {
+    public Page loadPage(long pageId) throws SQLException {
         PreparedStatement stLoadPage = conn.prepareStatement("SELECT * FROM pages WHERE id = ?");
-        stLoadPage.setInt(1, pageId);
+        stLoadPage.setLong(1, pageId);
 
         ResultSet rsLoadPage = stLoadPage.executeQuery();
 
