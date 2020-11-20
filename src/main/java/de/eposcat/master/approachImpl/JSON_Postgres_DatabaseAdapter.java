@@ -105,7 +105,7 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     @Override
-    public List<Page> findPagesByAttribute(String attributeName) throws SQLException {
+    public List<Page> findPagesByAttributeName(String attributeName) throws SQLException {
         PreparedStatement stFindByAttribute = conn.prepareStatement("SELECT * FROM pages WHERE attributes::jsonb ?? ?");
         stFindByAttribute.setString(1, attributeName);
 

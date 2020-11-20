@@ -9,13 +9,13 @@ Currently, two different approaches are being investigated:
 ## EAV
 
 The entity-attribute-value model disregards the intended usage of relations to create a dynamic model. 
-It consists of three tables: Entity, Attribute and Values. In Entity and Attribute we save the definition of entities and attributes respectively. 
-The values table saves in each row one value of an attribute of an entity.
+It consists of three tables: **Entity, Attribute and Values**. In Entity and Attribute we save the definition of entities and attributes respectively. 
+The **Values** table stores in each row one value of an attribute of an entity.
 
 ## JSON-Values
 
 JSON enables us to store dynamic structures in a text format. 
-Thanks to the increased usage of JSON in web environments database vendors improved their handling of this data type.
+Thanks to the increased usage of JSON in web environments database vendors improved the handling of this data type.
 
 Currently, we inspect the capabilities of 2 databases:
 

@@ -113,7 +113,7 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
     }
 
     @Override
-    public List<Page> findPagesByAttribute(String attributeName) throws SQLException{
+    public List<Page> findPagesByAttributeName(String attributeName) throws SQLException{
         // Oracle String literals are stupid -> sqlInjection would be possible here...
         // see https://stackoverflow.com/questions/56948001/how-to-use-oracles-json-value-function-with-a-preparedstatement
         String queryString = "SELECT * FROM pages WHERE json_exists(attributes, '$." + attributeName + "')";

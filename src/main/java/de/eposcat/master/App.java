@@ -11,10 +11,6 @@ import de.eposcat.master.model.AttributeBuilder;
 import de.eposcat.master.model.AttributeType;
 import de.eposcat.master.model.Page;
 
-/**
- * Hello world!
- *
- */
 public class App
 {
 

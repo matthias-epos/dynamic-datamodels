@@ -9,7 +9,6 @@
   <version>0.0.1-SNAPSHOT</version>
 
   <name>Dynamic Data Model</name>
-  <!-- FIXME change it to the project's website -->
   <url>https://github.com/matthias-epos/dynamic-datamodels</url>
 
   <properties>

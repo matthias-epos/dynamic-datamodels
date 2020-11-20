@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.sun.istack.internal.NotNull;
 import de.eposcat.master.connection.AbstractConnectionManager;
 import de.eposcat.master.exceptions.BlException;
 import de.eposcat.master.model.Attribute;
@@ -43,6 +44,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     @Override
+    @NotNull
     public Page createPage(String typeName) throws SQLException {
         if(typeName == null || typeName.isEmpty()){
             throw new IllegalArgumentException("Typename has to be a non empty String");
@@ -59,7 +61,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             return new Page(getIdFromGeneratedKeys(keySet, ENTITY_TABLE), typeName);
         }
 
-        throw new SQLException("No new row has been created in database. This should never happen!");
+        throw new SQLException("Could not insert a new page in the entity table. This should never happen!");
     }
 
     @Override
@@ -78,6 +80,10 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
 
     @Override
     public void updatePage(Page page) throws SQLException{
+        if(page == null){
+            throw new IllegalArgumentException("page must not be null");
+        }
+
         try {
             conn.setAutoCommit(false);
 
@@ -88,10 +94,9 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             int affectedRows = st.executeUpdate();
 
             if(affectedRows != 1) {
-                throw new BlException("page is not tracked by database, try create pageWithAttributes first");
+                throw new BlException("Page with id= "+ page.getId()+", type= " + page.getTypeName()+" is not tracked by database, try create pageWithAttributes first");
             }
 
-            //TODO Dont change while iterating
             HashMap<String, Attribute> persistedAttributesWithIds = new HashMap<>();
             for (String attributeName : page.getAttributes().keySet()) {
                 persistedAttributesWithIds.put(attributeName, saveAttribute(attributeName, page.getAttributes().get(attributeName)));
@@ -223,7 +228,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         if(rsLoadPage.next()) {
             page = new Page(rsLoadPage.getInt(1), rsLoadPage.getString(2));
         } else {
-            throw new SQLException();
+            return null;
         }
 
         //load Attributes of page
@@ -260,7 +265,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
 
     //Add attributeType?
     @Override
-    public List<Page> findPagesByAttribute(String attributeName) throws SQLException{
+    public List<Page> findPagesByAttributeName(String attributeName) throws SQLException{
         if(attributeName == null){
             throw new IllegalArgumentException("attributeName must not be null");
         }

@@ -4,17 +4,18 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
+import com.sun.istack.internal.NotNull;
 import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.Page;
 
 public interface IDatabaseAdapter {
     Page createPage(String typename) throws SQLException;
     Page createPageWithAttributes(String typename, Map<String, Attribute> attributes) throws SQLException;
-    void updatePage(Page page) throws SQLException;
 
+    void updatePage(@NotNull Page page) throws SQLException;
     Page loadPage(long pageId) throws SQLException;
-
+    
     List<Page> findPagesByType(String type) throws SQLException;
-    List<Page> findPagesByAttribute(String attributeName) throws SQLException;
+    List<Page> findPagesByAttributeName(String attributeName) throws SQLException;
     List<Page> findPagesByAttributeValue(String attributeName, Object value) throws SQLException;
 }

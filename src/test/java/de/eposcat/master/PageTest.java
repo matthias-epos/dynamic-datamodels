@@ -20,8 +20,7 @@ import java.util.HashMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 public class PageTest {
@@ -46,17 +45,19 @@ public class PageTest {
             assertThat(page.getTypeName(), is("testType"));
             assertThat(page.getAttributes().isEmpty(), is(true));
 
-            //fails on  missing/empty type
-            assertThrows(IllegalArgumentException.class, () -> dbAdapter.createPage(null));
-            assertThrows(IllegalArgumentException.class, () -> dbAdapter.createPage(""));
-
             assertThat(dbAdapter.loadPage(page.getId()), is(page));
         } catch (SQLException exception) {
             //No test should ever throw a SQL exception
-
             fail();
             exception.printStackTrace();
         }
+    }
+
+    @Test
+    public void createPageWithInvalidType(){
+        //fails on  missing/empty type
+        assertThrows(IllegalArgumentException.class, () -> dbAdapter.createPage(null));
+        assertThrows(IllegalArgumentException.class, () -> dbAdapter.createPage(""));
     }
 
     @Test
@@ -77,15 +78,50 @@ public class PageTest {
             assertThat(page.getAttribute("testAttr").getType(), is(AttributeType.String));
             assertThat(page.getAttribute("testAttr").getValue(), is("test"));
 
-            //fails on  missing/empty type
-            assertThrows(IllegalArgumentException.class, () -> dbAdapter.createPageWithAttributes(null, attributes));
-            assertThrows(IllegalArgumentException.class, () -> dbAdapter.createPageWithAttributes("", attributes));
 
-            //fails on null map
-            assertThrows(IllegalArgumentException.class, () -> dbAdapter.createPageWithAttributes("test", null));
-        } catch (SQLException exception) {
+         } catch (SQLException exception) {
             fail("No test should ever throw a SQL exception");
             exception.printStackTrace();
+        }
+    }
+
+    @Test
+    public void  createPageWithAttributesWithInvalidTypes(){
+        HashMap<String, Attribute> attributes = new HashMap<>();
+        attributes.put("testAttr", new AttributeBuilder().setValue("test")
+                .setType(AttributeType.String)
+                .createAttribute());
+
+        //fails on  missing/empty type
+        assertThrows(IllegalArgumentException.class, () -> dbAdapter.createPageWithAttributes(null, attributes));
+        assertThrows(IllegalArgumentException.class, () -> dbAdapter.createPageWithAttributes("", attributes));
+
+        //fails on null map
+        assertThrows(IllegalArgumentException.class, () -> dbAdapter.createPageWithAttributes("test", null));
+    }
+
+    @Test
+    public void loadPage(){
+        try {
+            Page page = dbAdapter.loadPage(1);
+            assertThat(page.getId(), is(1l));
+            assertThat(page.getTypeName(), is("single"));
+            assertThat(page.getAttributes().isEmpty(), is(false));
+            assertThat(page.getAttribute("singleAttribute").getValue(), is("test"));
+        } catch (SQLException throwables) {
+            fail();
+            throwables.printStackTrace();
+        }
+    }
+
+    @Test
+    public void loadPageWhichDoesNotExist(){
+        try {
+            Page page = dbAdapter.loadPage(-1);
+            assertNull(page);
+        } catch (SQLException throwables) {
+            fail();
+            throwables.printStackTrace();
         }
     }
 
@@ -113,16 +149,6 @@ public class PageTest {
     public void updatePage() {
 
         try {
-            //fails when page id is -1 (-> not tracked by database)
-            Page failPage1 = new Page("test");
-            assertThrows(BlException.class, () -> dbAdapter.updatePage(failPage1));
-
-            //entities with non -1 id which is not represented in the database should
-            //fail --> catch sql exception and thrown custom exception / does sql even fail??
-            //no, just returns no updated rows
-            Page failPage2 = new Page(9999, "test");
-            assertThrows(BlException.class, () -> dbAdapter.updatePage(failPage2));
-
             //entries with matching ids should be updated
             Page page = dbAdapter.createPage("updatePage");
             page.addAttribute("updatePageAtt", defaultAttribute);
@@ -139,7 +165,22 @@ public class PageTest {
         }
     }
 
-    //Based on existing images/insert scripts
+    @Test
+    public void updatePageNotTrackedByDatabase(){
+        //fails when page id is -1 (-> not tracked by database)
+        Page failPage1 = new Page("test");
+        assertThrows(BlException.class, () -> dbAdapter.updatePage(failPage1));
+
+        //entities with non -1 id which are not represented in the database should
+        //fail --> catch sql exception and thrown custom exception / does sql even fail??
+        //no, just returns no updated rows
+        Page failPage2 = new Page(9999, "test");
+        assertThrows(BlException.class, () -> dbAdapter.updatePage(failPage2));
+
+        assertThrows(IllegalArgumentException.class, () -> dbAdapter.updatePage(null));
+    }
+
+    // Following tests are based on existing images/insert scripts
     @Test
     public void findPageByType() {
         try {
@@ -148,32 +189,31 @@ public class PageTest {
             assertThat(dbAdapter.findPagesByType("ten").size(), is(10));
 
             assertThat(dbAdapter.findPagesByType("this type does not exist").size(), is(0));
-
-            //fail on empty/null type
-            assertThrows(IllegalArgumentException.class, () -> dbAdapter.findPagesByType(""));
-            assertThrows(IllegalArgumentException.class, () -> dbAdapter.findPagesByType(null));
         } catch (SQLException e) {
             fail();
             e.printStackTrace();
         }
-
-
-
     }
 
-    //TODO rename to findByAttributeName
     @Test
-    public void findPageByAttribute() {
+    public void findPageByTypeWithInvalidType(){
+        //fail on empty/null type
+        assertThrows(IllegalArgumentException.class, () -> dbAdapter.findPagesByType(""));
+        assertThrows(IllegalArgumentException.class, () -> dbAdapter.findPagesByType(null));
+    }
+
+    @Test
+    public void findPageByAttributeName() {
         try {
             //one hit, multiple hits, no hit
-            assertThat(dbAdapter.findPagesByAttribute("singleAttribute").size(), is(1));
-            assertThat(dbAdapter.findPagesByAttribute("tenAttribute").size(), is(10));
-            assertThat(dbAdapter.findPagesByAttribute("this attribute does not exist").size(), is(0));
+            assertThat(dbAdapter.findPagesByAttributeName("singleAttribute").size(), is(1));
+            assertThat(dbAdapter.findPagesByAttributeName("tenAttribute").size(), is(10));
+            assertThat(dbAdapter.findPagesByAttributeName("this attribute does not exist").size(), is(0));
 
             //empty name is allowed
 
             //fail on null attribute
-            assertThrows(IllegalArgumentException.class, () -> dbAdapter.findPagesByAttribute(null));
+            assertThrows(IllegalArgumentException.class, () -> dbAdapter.findPagesByAttributeName(null));
         } catch (SQLException e) {
             fail();
             e.printStackTrace();
