@@ -18,7 +18,6 @@ import de.eposcat.master.connection.AbstractConnectionManager;
 import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.Page;
 
-
 public class JSON_Oracle_DatabaseAdapter implements IDatabaseAdapter {
     
     private final Connection conn;
@@ -112,6 +111,17 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
         return pages;
     }
 
+    /**
+     * Returns all pages which have an attribute with the given name.
+     *
+     * WARNING: This implementation might be suspect of SQL injection attacks!
+     * Sanitation of input is advised!
+     * See: https://stackoverflow.com/questions/56948001/how-to-use-oracles-json-value-function-with-a-preparedstatement
+     *
+     * @param attributeName the name of the attribute we are searching
+     * @return a List of matching pages
+     * @throws SQLException if the implementation or database connection are malfunctioning
+     */
     @Override
     public List<Page> findPagesByAttributeName(String attributeName) throws SQLException{
         // Oracle String literals are stupid -> sqlInjection would be possible here...
@@ -132,6 +142,18 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
         return pages;
     }
 
+    /**
+     * Returns all pages which have an attribute with the given name and value.
+     *
+     * WARNING: This implementation might be suspect of SQL injection attacks.
+     * Sanitation of input is advised!
+     * See: https://stackoverflow.com/questions/56948001/how-to-use-oracles-json-value-function-with-a-preparedstatement
+     *
+     * @param attributeName the name of the attribute we are searching
+     * @param value the value of the attribute we are searching
+     * @return a List of matching pages
+     * @throws SQLException if the implementation or database connection are malfunctioning
+     */
     @Override
     public List<Page> findPagesByAttributeValue(String attributeName, Object value) throws SQLException{
         // Oracle String literals are stupid -> sqlInjection would be possible here...
