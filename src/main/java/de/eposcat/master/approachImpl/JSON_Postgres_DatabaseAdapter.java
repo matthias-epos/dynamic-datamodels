@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,9 +21,9 @@ import de.eposcat.master.model.Page;
 
 public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
 
-    private Connection conn;
-    private Gson gson = new Gson();
-    private Type attributeType = new TypeToken<Map<String, Attribute>>() {}.getType();
+    private final Connection conn;
+    private final Gson gson = new Gson();
+    private final Type attributeType = new TypeToken<Map<String, Attribute>>() {}.getType();
 
     public JSON_Postgres_DatabaseAdapter(AbstractConnectionManager connectionManager) {
         this.conn = connectionManager.getConnection();
@@ -30,10 +31,15 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
 
     @Override
     public Page createPage(String typename) throws SQLException {
+        return createPageWithAttributes(typename, new HashMap<>());
+    }
+
+    @Override
+    public Page createPageWithAttributes(String typename, Map<String, Attribute> attributes) throws SQLException{
         PreparedStatement stCreatePage = conn.prepareStatement("INSERT INTO pages(type, attributes) VALUES (?,?::json)",
-                                                               Statement.RETURN_GENERATED_KEYS);
+                Statement.RETURN_GENERATED_KEYS);
         stCreatePage.setString(1, typename);
-        stCreatePage.setObject(2, "{}");
+        stCreatePage.setObject(2, mapToJSON(attributes));
 
         int affectedRows = stCreatePage.executeUpdate();
 
@@ -50,18 +56,18 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
     @Override
     public void updatePage(Page page) throws SQLException {
 
-        PreparedStatement stUpdatePage = conn.prepareStatement("UPDATE pages SET type = ?, attributes= ?::json WHERE id = ?");
+        PreparedStatement stUpdatePage = conn.prepareStatement("UPDATE pages SET type = ?, attributes = ?::json WHERE id = ?");
         stUpdatePage.setString(1, page.getTypeName());
         stUpdatePage.setString(2, mapToJSON(page.getAttributes()));
-        stUpdatePage.setInt(3, page.getId());
+        stUpdatePage.setLong(3, page.getId());
         stUpdatePage.executeUpdate();
 
     }
 
     @Override
-    public Page loadPage(int pageId) throws SQLException {
+    public Page loadPage(long pageId) throws SQLException {
         PreparedStatement stLoadPage = conn.prepareStatement("SELECT * FROM pages WHERE id = ?");
-        stLoadPage.setInt(1, pageId);
+        stLoadPage.setLong(1, pageId);
 
         ResultSet rsLoadPage = stLoadPage.executeQuery();
 
@@ -78,12 +84,33 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     @Override
-    public List<Page> findPagesByAttribute(String attributeName) throws SQLException {
+    public List<Page> findPagesByType(String type) throws SQLException {
+        PreparedStatement stFindByType = conn.prepareStatement("SELECT * FROM pages WHERE type = ?");
+        stFindByType.setString(1,type);
+
+        ResultSet rs = stFindByType.executeQuery();
+        List<Page> pages = new ArrayList<>();
+
+        while(rs.next()){
+            long id = rs.getInt("ID");
+            String resultType = rs.getString("type");
+            String attributesJSON = rs.getString("attributes");
+
+            Page page = new Page(id, resultType);
+            page.setAttributes(jsonToMap(attributesJSON));
+            pages.add(page);
+        }
+
+        return pages;
+    }
+
+    @Override
+    public List<Page> findPagesByAttributeName(String attributeName) throws SQLException {
         PreparedStatement stFindByAttribute = conn.prepareStatement("SELECT * FROM pages WHERE attributes::jsonb ?? ?");
         stFindByAttribute.setString(1, attributeName);
 
         ResultSet rsFindPagesByAttribute = stFindByAttribute.executeQuery();
-        List<Page> pages = new ArrayList<Page>();
+        List<Page> pages = new ArrayList<>();
 
         while (rsFindPagesByAttribute.next()) {
             Page page = new Page(rsFindPagesByAttribute.getInt(1), rsFindPagesByAttribute.getString(2));
@@ -96,12 +123,11 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
 
     @Override
     public List<Page> findPagesByAttributeValue(String attributeName, Object value) throws SQLException {
-        PreparedStatement stFindByAttributeValue = conn.prepareStatement("SELECT * FROM pages WHERE attributes::jsonb #>> ?::varchar[] = ?");
-        stFindByAttributeValue.setObject(1, "{" + attributeName + ",value}");
-        stFindByAttributeValue.setObject(2, value);
+        PreparedStatement stFindByAttributeValue = conn.prepareStatement("SELECT * FROM pages WHERE attributes::jsonb @> ?::jsonb");
+        stFindByAttributeValue.setObject(1, "[{\"" + attributeName + "\":\"" + value + "\" }]");
 
         ResultSet rsFindPagesByAttributeValue = stFindByAttributeValue.executeQuery();
-        List<Page> pages = new ArrayList<Page>();
+        List<Page> pages = new ArrayList<>();
 
         while (rsFindPagesByAttributeValue.next()) {
             Page page = new Page(rsFindPagesByAttributeValue.getInt(1), rsFindPagesByAttributeValue.getString(2));

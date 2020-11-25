@@ -6,7 +6,7 @@ import java.util.Properties;
 public class PostgresConnectionManager extends AbstractConnectionManager {
 
     public PostgresConnectionManager(RelationalApproach approach) {
-        // DON'T SHARE NON LOCALHOST SERVERS AND CREDENTAILS ON GIT!!
+        // DON'T SHARE NON LOCALHOST SERVERS AND CREDENTIALS ON GIT!!
         connectionString = "jdbc:postgresql://localhost/";
 
         switch (approach) {

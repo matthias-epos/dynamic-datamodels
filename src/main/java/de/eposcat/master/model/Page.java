@@ -2,30 +2,32 @@ package de.eposcat.master.model;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class Page {
-    private int id;
+    private long id;
+    //TODO make typeName mandatory
     private String typeName;
     private Map<String, Attribute> attributes;
     
     private Page() {
         id = -1;
-        attributes = new HashMap<String, Attribute>();
+        attributes = new HashMap<>();
     }
     
-    public Page(String pageName) {
+    public Page(String typeName) {
         this();
         
-        typeName = pageName;
+        this.typeName = typeName;
     }
     
-    public Page(int id, String typeName) {
+    public Page(long id, String typeName) {
         this();
         this.id = id;
         this.typeName = typeName;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
@@ -42,11 +44,14 @@ public class Page {
     public void addAttribute(String name, Attribute attribute) {
         attributes.put(name, attribute);
     }
+
+    public Attribute getAttribute(String attributeName) {
+        return attributes.get(attributeName);
+    }
     
     public void removeAttribute(String name) {
         attributes.remove(name);
     }
-
     
     public Map<String, Attribute> getAttributes() {
         return attributes;
@@ -54,14 +59,28 @@ public class Page {
     
     @Override
     public String toString() {
-        String pageString = "Page #" + id;
-        pageString += "\n Type: " + typeName;
+        StringBuilder pageString = new StringBuilder("Page #" + id);
+        pageString.append("\n Type: ").append(typeName);
         for(String attributeName: attributes.keySet()) {
-            pageString += "\n" + attributeName;
-            pageString += ": " + attributes.get(attributeName).getValue();
+            pageString.append("\n").append(attributeName);
+            pageString.append(": ").append(attributes.get(attributeName).getValue());
         }
         
-        return pageString;
+        return pageString.toString();
     }
-    
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Page page = (Page) o;
+        return id == page.id &&
+                typeName.equals(page.typeName) &&
+                Objects.equals(attributes, page.attributes);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, typeName, attributes);
+    }
 }

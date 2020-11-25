@@ -3,7 +3,7 @@ package de.eposcat.master.model;
 
 public class Attribute {
     // Only used in eav approach
-    private transient int id;
+    private transient long id;
     private AttributeType type;
     private Object value;
     
@@ -17,7 +17,7 @@ public class Attribute {
         this.value = value;
     }
 
-    public Attribute(int id, AttributeType type, Object value) {
+    public Attribute(long id, AttributeType type, Object value) {
         this();
         this.id = id;
         this.type = type;
@@ -40,7 +40,7 @@ public class Attribute {
         this.value = value;
     }
     
-    public int getId() {
+    public long getId() {
         return id;
     }
     

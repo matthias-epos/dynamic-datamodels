@@ -1,5 +1,9 @@
 .classpath
 .project
 .settings
+.idea
 drivers
 target
+dynamic-datamodels.iml
+master.iml
+*.iml
