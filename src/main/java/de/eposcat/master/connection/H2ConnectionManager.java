@@ -1,10 +1,5 @@
 package de.eposcat.master.connection;
 
-import oracle.jdbc.pool.OracleDataSource;
-
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Properties;
 
 public class H2ConnectionManager extends AbstractConnectionManager{

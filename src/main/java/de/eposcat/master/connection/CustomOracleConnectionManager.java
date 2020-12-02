@@ -8,13 +8,13 @@ import oracle.jdbc.pool.OracleDataSource;
 
 public class CustomOracleConnectionManager extends AbstractConnectionManager {
 
-    public CustomOracleConnectionManager(RelationalApproach approach) {
+    public CustomOracleConnectionManager(RelationalApproach approach, String host, int port, String user, String password) {
         // DON'T SHARE NON LOCALHOST SERVERS AND CREDENTAILS ON GIT!
-        connectionString = "jdbc:oracle:thin:@//localhost:33333/xepdb1";
+        connectionString = "jdbc:oracle:thin:@//" + host +":"+port+"/xepdb1";
         
         databaseProperties = new Properties();
-        databaseProperties.put("user", "test");
-        databaseProperties.put("password", "test");
+        databaseProperties.put("user", user);
+        databaseProperties.put("password", password);
     }
     
     public Connection createDatabaseConnection() {

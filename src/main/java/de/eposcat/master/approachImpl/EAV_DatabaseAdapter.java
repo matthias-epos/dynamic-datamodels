@@ -10,13 +10,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.sun.istack.internal.NotNull;
 import de.eposcat.master.connection.AbstractConnectionManager;
+import de.eposcat.master.model.AttributeBuilder;
+import de.eposcat.master.model.Page;
 import de.eposcat.master.exceptions.BlException;
 import de.eposcat.master.model.Attribute;
-import de.eposcat.master.model.AttributeBuilder;
 import de.eposcat.master.model.AttributeType;
-import de.eposcat.master.model.Page;
 
 
 public class EAV_DatabaseAdapter implements IDatabaseAdapter {
@@ -44,7 +43,6 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     @Override
-    @NotNull
     public Page createPage(String typeName) throws SQLException {
         if(typeName == null || typeName.isEmpty()){
             throw new IllegalArgumentException("Typename has to be a non empty String");

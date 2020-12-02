@@ -1,6 +1,7 @@
 package de.eposcat.master;
 
 
+import com.google.gson.Gson;
 import de.eposcat.master.approachImpl.EAV_DatabaseAdapter;
 import de.eposcat.master.approachImpl.IDatabaseAdapter;
 import de.eposcat.master.connection.H2ConnectionManager;
@@ -34,6 +35,27 @@ public class PageTest {
 
         dbAdapter = new EAV_DatabaseAdapter(connectionManager);
         defaultAttribute = new AttributeBuilder().setType(AttributeType.String).setValue("A test value").createAttribute();
+    }
+
+    @Test
+    @Disabled
+    public void geTestDataForJsonMethod(){
+        //TODO Small helper to get json database data, probably should be placed somewhere else
+        Gson gson = new Gson();
+
+        for(int i = 1; i<99; i++){
+            Page page = null;
+            try {
+                page = dbAdapter.loadPage(i);
+                if(page == null){
+                    break;
+                }
+                System.out.println("( \'"+page.getTypeName() +"\', \'" + gson.toJson(page.getAttributes()) + "\' ),");
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+        }
+
     }
 
     @Test
