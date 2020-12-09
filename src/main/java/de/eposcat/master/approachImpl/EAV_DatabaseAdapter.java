@@ -22,8 +22,8 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
 
     private static final String CREATE_PAGE_QUERY = "INSERT INTO entities (typename) VALUES (?)";
     private static final String UPDATE_PAGE_QUERY = "UPDATE entities SET typename = ? WHERE id = ?";
-    private static final String REMOVE_ATTRIBUTE_QUERY = "DELETE FROM public.'eav_values' WHERE ent_id = ? AND att_id = ?";
-    private static final String UPDATE_ATTRIBUTE_VALUE_QUERY = "UPDATE public.'eav_values' SET value = ? WHERE ent_id = ? AND att_id = ?";
+    private static final String REMOVE_ATTRIBUTE_QUERY = "DELETE FROM eav_values WHERE ent_id = ? AND att_id = ?";
+    private static final String UPDATE_ATTRIBUTE_VALUE_QUERY = "UPDATE eav_values SET value = ? WHERE ent_id = ? AND att_id = ?";
     private static final String CREATE_ATTRIBUTE_VALUE_QUERY = "INSERT INTO eav_values(ent_id, att_id, value) VALUES (?,?,?)";
     private static final String FIND_ATTRIBUTE_QUERY = "SELECT id FROM attributes WHERE datatype = ? AND name = ?";
     private static final String CREATE_ATTRIBUTE_QUERY = "INSERT INTO attributes (datatype, name) VALUES (?,?)";

@@ -1,15 +1,11 @@
 package de.eposcat.master;
 
-import java.sql.SQLException;
+import java.io.IOException;
 
-import de.eposcat.master.approachImpl.IDatabaseAdapter;
-import de.eposcat.master.approachImpl.JSON_Oracle_DatabaseAdapter;
-import de.eposcat.master.connection.AbstractConnectionManager;
-import de.eposcat.master.connection.CustomOracleConnectionManager;
 import de.eposcat.master.connection.RelationalApproach;
-import de.eposcat.master.model.AttributeBuilder;
-import de.eposcat.master.model.AttributeType;
-import de.eposcat.master.model.Page;
+import de.eposcat.master.generators.ChangesGenerator;
+import de.eposcat.master.generators.StartDataGenerator;
+import de.eposcat.master.generators.data.StartData;
 
 public class App
 {
@@ -28,26 +24,14 @@ public class App
     {
         System.out.println( "Hello World!" );
 
-//        Page page;
-//        try {
-////            page = dbAdapter.createPage("test");
-////            page.getAttributes().put("t8", new AttributeBuilder().setType(AttributeType.String).setValue("").createAttribute());
-////            page.getAttributes().put("t9", new AttributeBuilder().setType(AttributeType.String).setValue(null).createAttribute());
-////            dbAdapter.updatePage(page);
-//
-////            page = dbAdapter.loadPage(1);
-////            System.out.println(page);
-//
-////            for(Page foundByAttPage: dbAdapter.findPagesByAttribute("t8")) {
-////                System.out.println(foundByAttPage);
-////            }
-//
-////            for(Page foundByValPage: dbAdapter.findPagesByAttributeValue("t9", "value2")) {
-////                System.out.println(foundByValPage);
-////            }
-//        } catch (SQLException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        }
+        StartDataGenerator generator = new StartDataGenerator(1);
+        StartData data = generator.generateData(100,30,3, 8);
+
+        ChangesGenerator changes = new ChangesGenerator(data.entityNames, data.attributeNames, "test.txt", 1);
+        try {
+            changes.generateChangeSets(100);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
