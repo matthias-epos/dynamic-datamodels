@@ -1,12 +1,16 @@
 package de.eposcat.master.generators;
 
+import de.eposcat.master.generators.data.FillerAttributesStats;
+import de.eposcat.master.generators.data.PerformanceTestAttribute;
 import de.eposcat.master.generators.data.StartData;
+import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.AttributeBuilder;
 import de.eposcat.master.model.AttributeType;
 import de.eposcat.master.model.Page;
 
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Random;
 
 public class StartDataGenerator {
@@ -16,9 +20,9 @@ public class StartDataGenerator {
         random = new Random(seed);
     }
 
-    public StartData generateData(int numberOfStartEntities, int numberOfStartAttributes, int meanNumberOfAttributes, int maxNumberOfAttributes) {
+    public StartData generateData(int numberOfStartEntities, FillerAttributesStats stats, List<PerformanceTestAttribute> perfAttributes) {
         String[] entityNames = new String[numberOfStartEntities];
-        String[] attributeNames = new String[numberOfStartAttributes];
+        String[] attributeNames = new String[stats.getNumberOfStartAttributes()];
 
         fillWithRandomNames(entityNames);
         fillWithRandomNames(attributeNames);
@@ -27,22 +31,26 @@ public class StartDataGenerator {
 
         for (String entityName : entityNames) {
             Page page = new Page(entityName);
-            int amountOfAttributes = numberOfAttributes(meanNumberOfAttributes, maxNumberOfAttributes);
+
+            //Generate filler Attributes
+            int amountOfAttributes = numberOfAttributes(stats.getMeanNumberOfAttributes(), stats.getMaxNumberOfAttributes());
 
             for (int j = 0; j < amountOfAttributes; j++) {
-                page.addAttribute(attributeNames[random.nextInt(numberOfStartAttributes)],
+                page.addAttribute(attributeNames[random.nextInt(stats.getNumberOfStartAttributes())],
                         new AttributeBuilder().setValue(getRandomEntityName())
                                 .setType(AttributeType.values()[random.nextInt(AttributeType.values().length)])
                                 .createAttribute());
             }
 
+            //Generate Performance Test Attributes (Fixed names, certain probabilities, certain values)
+            for (PerformanceTestAttribute testAttribute : perfAttributes) {
+                if (random.nextDouble() < testAttribute.getOccurrencePercentage() / 100) {
+                    page.addAttribute(testAttribute.getAttributeName(), new Attribute(AttributeType.String, testAttribute.getValueGenerator().get()));
+                }
+            }
+
             pages.add(page);
         }
-
-
-//        for(Page page : pages){
-//            System.out.println(page.toString());
-//        }
 
         return new StartData(entityNames, attributeNames, pages);
     }

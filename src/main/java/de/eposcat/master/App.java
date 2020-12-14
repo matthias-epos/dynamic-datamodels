@@ -22,16 +22,6 @@ public class App
 
     public static void main( String[] args )
     {
-        System.out.println( "Hello World!" );
-
-        StartDataGenerator generator = new StartDataGenerator(1);
-        StartData data = generator.generateData(100,30,3, 8);
-
-        ChangesGenerator changes = new ChangesGenerator(data.entityNames, data.attributeNames, "test.txt", 1);
-        try {
-            changes.generateChangeSets(100);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        System.out.println(String.valueOf(true));
     }
 }
