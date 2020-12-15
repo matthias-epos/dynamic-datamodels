@@ -7,6 +7,7 @@ import de.eposcat.master.connection.RelationalApproach;
 import de.eposcat.master.model.AttributeBuilder;
 import de.eposcat.master.model.AttributeType;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
@@ -16,6 +17,7 @@ import org.testcontainers.utility.DockerImageName;
 import java.time.Duration;
 
 @Testcontainers
+@Disabled
 public class PageOracleJsonIT extends PageTest {
 
     @Container

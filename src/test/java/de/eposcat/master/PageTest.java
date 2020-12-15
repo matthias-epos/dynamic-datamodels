@@ -44,6 +44,7 @@ public class PageTest {
     }
 
     @Test
+    @Disabled
     public void geTestDataForJsonMethod(){
         //TODO Small helper to get json database data, probably should be placed somewhere else
         GsonBuilder builder = new GsonBuilder();
