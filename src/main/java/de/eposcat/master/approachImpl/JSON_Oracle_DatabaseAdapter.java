@@ -133,13 +133,13 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
     }
 
     @Override
-    public List<Page> findPagesByAttributeValue(String attributeName, Object value) throws SQLException{
+    public List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException{
         // Oracle String literals are stupid -> sqlInjection would be possible here...
         // see https://stackoverflow.com/questions/56948001/how-to-use-oracles-json-value-function-with-a-preparedstatement
         String queryString = "SELECT * FROM pages WHERE json_value(attributes, '$."+ attributeName +".value') = ?";
         
         PreparedStatement stFindByAttributeValue = conn.prepareStatement(queryString);
-        stFindByAttributeValue.setObject(1,  value);
+        stFindByAttributeValue.setObject(1,  value.getValue());
         
         ResultSet rsFindPagesByAttributeValue = stFindByAttributeValue.executeQuery();
         List<Page> pages = new ArrayList<>();
