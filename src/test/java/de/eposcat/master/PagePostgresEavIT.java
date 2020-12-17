@@ -18,10 +18,10 @@ import java.time.Duration;
 public class PagePostgresEavIT extends PageTest {
 
     @Container
-    public static GenericContainer postgres = new GenericContainer(DockerImageName.parse("mstrepos1/dynamic_datamodels:postgres")).withExposedPorts(5432).withEnv("POSTGRES_PASSWORD", "admin").waitingFor(Wait.forLogMessage(".*database system is ready to accept connections\\s*",2).withStartupTimeout(Duration.ofMinutes(2)));
-
-//    @Container
-//    public GenericContainer oracle = new GenericContainer(DockerImageName.parse("mstrepos1/dynamic_datamodels:oracle")).withExposedPorts(55555);
+    public static GenericContainer postgres = new GenericContainer(DockerImageName.parse("mstrepos1/dynamic_datamodels:postgres"))
+            .withExposedPorts(5432).withEnv("POSTGRES_PASSWORD", "admin")
+            .waitingFor(Wait.forLogMessage(".*database system is ready to accept connections\\s*",2)
+            .withStartupTimeout(Duration.ofMinutes(2)));
 
     @BeforeAll
     static void initDataBase(){

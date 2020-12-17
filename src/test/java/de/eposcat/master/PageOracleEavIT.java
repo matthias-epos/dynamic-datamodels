@@ -22,7 +22,10 @@ import java.time.Duration;
 public class PageOracleEavIT extends PageTest {
 
     @Container
-    public static GenericContainer oracle = new GenericContainer(DockerImageName.parse("mstrepos1/dynamic_datamodels:oracle")).withExposedPorts(1521).withEnv("ORACLE_PWD", "admin").waitingFor(Wait.forLogMessage(".*DATABASE IS READY TO USE!\\s*",1).withStartupTimeout(Duration.ofMinutes(15)));
+    public static GenericContainer oracle = new GenericContainer(DockerImageName.parse("mstrepos1/dynamic_datamodels:oracle"))
+            .withExposedPorts(1521).withEnv("ORACLE_PWD", "admin")
+            .waitingFor(Wait.forLogMessage(".*DATABASE IS READY TO USE!\\s*",1)
+            .withStartupTimeout(Duration.ofMinutes(15)));
 
     @BeforeAll
     static void initDataBase(){

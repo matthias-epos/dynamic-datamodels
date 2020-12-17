@@ -30,8 +30,8 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
 
     public JSON_Postgres_DatabaseAdapter(AbstractConnectionManager connectionManager) {
         this.conn = connectionManager.getConnection();
-        GsonBuilder builder = new GsonBuilder();
 
+        GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(attributeType, new AttributesSerializer());
         builder.registerTypeAdapter(attributeType, new AttributesDeserializer());
         gson = builder.create();
