@@ -26,7 +26,7 @@ CREATE TABLE eav_values (
 	CONSTRAINT "EAV_VALUES_PK_D" PRIMARY KEY (ent_id, att_id)
 );
 
-# Just Oracle things
+-- Just Oracle things
 INSERT  INTO entities (typename) VALUES ('single');
 INSERT  INTO entities (typename) VALUES('ten');
 INSERT  INTO entities (typename) VALUES('ten');

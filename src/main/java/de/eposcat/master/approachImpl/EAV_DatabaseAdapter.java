@@ -282,10 +282,10 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     @Override
-    public List<Page> findPagesByAttributeValue(String attributeName, Object value) throws SQLException{
+    public List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException{
         PreparedStatement stFindPagesByAttributeValue = conn.prepareStatement(FIND_PAGE_BY_ATTRIBUTE_VALUE_QUERY);
         stFindPagesByAttributeValue.setString(1, attributeName);
-        stFindPagesByAttributeValue.setString(2, value.toString());
+        stFindPagesByAttributeValue.setString(2, value.getValue().toString());
         ResultSet rsPages = stFindPagesByAttributeValue.executeQuery();
 
         List<Page> pageList= new ArrayList<>();

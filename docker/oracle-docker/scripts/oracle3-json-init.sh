@@ -13,20 +13,20 @@ CREATE TABLE pages (
     CONSTRAINT "ENSURE_JSON_ATTRIBUTE" CHECK (attributes IS JSON)
 );
 
-INSERT INTO pages (type, attributes) VALUES ( 'single', '{"singleAttribute":{"type":"String","value":"test"}}' );
-INSERT INTO pages (type, attributes) VALUES ( 'ten', '{"tenAttribute":{"type":"String","value":"firstHalf"}}' );
-INSERT INTO pages (type, attributes) VALUES ( 'ten', '{"tenAttribute":{"type":"String","value":"firstHalf"}}' );
-INSERT INTO pages (type, attributes) VALUES ( 'ten', '{"tenAttribute":{"type":"String","value":"firstHalf"}}' );
-INSERT INTO pages (type, attributes) VALUES ( 'ten', '{"tenAttribute":{"type":"String","value":"firstHalf"}}' );
-INSERT INTO pages (type, attributes) VALUES ( 'ten', '{"tenAttribute":{"type":"String","value":"firstHalf"}}' );
-INSERT INTO pages (type, attributes) VALUES ( 'ten', '{"tenAttribute":{"type":"String","value":"secondHalf"}}' );
-INSERT INTO pages (type, attributes) VALUES ( 'ten', '{"tenAttribute":{"type":"String","value":"secondHalf"}}' );
-INSERT INTO pages (type, attributes) VALUES ( 'ten', '{"tenAttribute":{"type":"String","value":"secondHalf"}}' );
-INSERT INTO pages (type, attributes) VALUES ( 'ten', '{"tenAttribute":{"type":"String","value":"secondHalf"}}' );
-INSERT INTO pages (type, attributes) VALUES ( 'ten', '{"tenAttribute":{"type":"String","value":"secondHalf"}}' );
-INSERT INTO pages (type, attributes) VALUES ( 'rand', '{}' );
-INSERT INTO pages (type, attributes) VALUES ( 'rand', '{}' );
-INSERT INTO pages (type, attributes) VALUES ( 'rand', '{}' );
+INSERT INTO pages (type, attributes) VALUES ( 'single', '[{"name":"singleAttribute","values":[{"String":"test"}]}]' );
+INSERT INTO pages (type, attributes) VALUES ( 'ten', '[{"name":"tenAttribute","values":[{"String":"firstHalf"}]}]' );
+INSERT INTO pages (type, attributes) VALUES ( 'ten', '[{"name":"tenAttribute","values":[{"String":"firstHalf"}]}]' );
+INSERT INTO pages (type, attributes) VALUES ( 'ten', '[{"name":"tenAttribute","values":[{"String":"firstHalf"}]}]' );
+INSERT INTO pages (type, attributes) VALUES ( 'ten', '[{"name":"tenAttribute","values":[{"String":"firstHalf"}]}]' );
+INSERT INTO pages (type, attributes) VALUES ( 'ten', '[{"name":"tenAttribute","values":[{"String":"firstHalf"}]}]' );
+INSERT INTO pages (type, attributes) VALUES ( 'ten', '[{"name":"tenAttribute","values":[{"String":"secondHalf"}]}]' );
+INSERT INTO pages (type, attributes) VALUES ( 'ten', '[{"name":"tenAttribute","values":[{"String":"secondHalf"}]}]' );
+INSERT INTO pages (type, attributes) VALUES ( 'ten', '[{"name":"tenAttribute","values":[{"String":"secondHalf"}]}]' );
+INSERT INTO pages (type, attributes) VALUES ( 'ten', '[{"name":"tenAttribute","values":[{"String":"secondHalf"}]}]' );
+INSERT INTO pages (type, attributes) VALUES ( 'ten', '[{"name":"tenAttribute","values":[{"String":"secondHalf"}]}]' );
+INSERT INTO pages (type, attributes) VALUES ( 'rand', '[]' );
+INSERT INTO pages (type, attributes) VALUES ( 'rand', '[]' );
+INSERT INTO pages (type, attributes) VALUES ( 'rand', '[]' );
 
 exit;
 EOSQL

@@ -16,5 +16,5 @@ public interface IDatabaseAdapter {
     
     List<Page> findPagesByType(String type) throws SQLException;
     List<Page> findPagesByAttributeName(String attributeName) throws SQLException;
-    List<Page> findPagesByAttributeValue(String attributeName, Object value) throws SQLException;
+    List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException;
 }

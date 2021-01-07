@@ -11,22 +11,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gson.Gson;
+import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 
 import de.eposcat.master.connection.AbstractConnectionManager;
+import de.eposcat.master.exceptions.BlException;
 import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.Page;
+import de.eposcat.master.serializer.AttributesDeserializer;
+import de.eposcat.master.serializer.AttributesSerializer;
 
 
 public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
 
     private final Connection conn;
-    private final Gson gson = new Gson();
+    private final Gson gson;
     private final Type attributeType = new TypeToken<Map<String, Attribute>>() {}.getType();
 
     public JSON_Postgres_DatabaseAdapter(AbstractConnectionManager connectionManager) {
         this.conn = connectionManager.getConnection();
+
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(attributeType, new AttributesSerializer());
+        builder.registerTypeAdapter(attributeType, new AttributesDeserializer());
+        gson = builder.create();
     }
 
     @Override
@@ -36,6 +44,10 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
 
     @Override
     public Page createPageWithAttributes(String typename, Map<String, Attribute> attributes) throws SQLException{
+        if(typename == null || typename.isEmpty() || attributes == null){
+            throw new IllegalArgumentException();
+        }
+
         PreparedStatement stCreatePage = conn.prepareStatement("INSERT INTO pages(type, attributes) VALUES (?,?::json)",
                 Statement.RETURN_GENERATED_KEYS);
         stCreatePage.setString(1, typename);
@@ -47,7 +59,9 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
             ResultSet key = stCreatePage.getGeneratedKeys();
             key.next();
 
-            return new Page(key.getInt(1), typename);
+            Page pageWithId = new Page(key.getInt(1), typename);
+            pageWithId.setAttributes(attributes);
+            return pageWithId;
         }
 
         return null;
@@ -55,13 +69,19 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
 
     @Override
     public void updatePage(Page page) throws SQLException {
+        if(page == null){
+            throw new IllegalArgumentException("page must not be null");
+        }
 
         PreparedStatement stUpdatePage = conn.prepareStatement("UPDATE pages SET type = ?, attributes = ?::json WHERE id = ?");
         stUpdatePage.setString(1, page.getTypeName());
         stUpdatePage.setString(2, mapToJSON(page.getAttributes()));
         stUpdatePage.setLong(3, page.getId());
-        stUpdatePage.executeUpdate();
+        int affectedRows = stUpdatePage.executeUpdate();
 
+        if(affectedRows != 1) {
+            throw new BlException("Page with id= "+ page.getId()+", type= " + page.getTypeName()+" is not tracked by database, try create pageWithAttributes first");
+        }
     }
 
     @Override
@@ -78,13 +98,17 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
 
             return page;
         } else {
-            throw new SQLException("Does not exist");
+            return null;
         }
 
     }
 
     @Override
     public List<Page> findPagesByType(String type) throws SQLException {
+        if(type == null || type.isEmpty()){
+            throw new IllegalArgumentException();
+        }
+
         PreparedStatement stFindByType = conn.prepareStatement("SELECT * FROM pages WHERE type = ?");
         stFindByType.setString(1,type);
 
@@ -106,8 +130,14 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
 
     @Override
     public List<Page> findPagesByAttributeName(String attributeName) throws SQLException {
-        PreparedStatement stFindByAttribute = conn.prepareStatement("SELECT * FROM pages WHERE attributes::jsonb ?? ?");
-        stFindByAttribute.setString(1, attributeName);
+        if(attributeName == null){
+            throw new IllegalArgumentException();
+        }
+
+        JsonArray jsonArray = getAttributeArray(attributeName, null);
+
+        PreparedStatement stFindByAttribute = conn.prepareStatement("SELECT * FROM pages WHERE attributes::jsonb @> ?::jsonb");
+        stFindByAttribute.setString(1, gson.toJson(jsonArray));
 
         ResultSet rsFindPagesByAttribute = stFindByAttribute.executeQuery();
         List<Page> pages = new ArrayList<>();
@@ -121,10 +151,30 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
         return pages;
     }
 
+
+    private JsonArray getAttributeArray(String attributeName, Attribute attribute) {
+        JsonObject nameHelper = new JsonObject();
+        nameHelper.addProperty("name", attributeName);
+
+        if(attribute != null){
+            JsonArray values =  new JsonArray();
+            JsonObject valueObject = new JsonObject();
+            valueObject.addProperty(attribute.getType().toString(), attribute.getValue().toString());
+            values.add(valueObject);
+            nameHelper.add("values", values);
+        }
+
+        JsonArray jsonArray = new JsonArray();
+        jsonArray.add(nameHelper);
+        return jsonArray;
+    }
+
     @Override
-    public List<Page> findPagesByAttributeValue(String attributeName, Object value) throws SQLException {
+    public List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException {
+
+        JsonArray jsonArray = getAttributeArray(attributeName, value);
         PreparedStatement stFindByAttributeValue = conn.prepareStatement("SELECT * FROM pages WHERE attributes::jsonb @> ?::jsonb");
-        stFindByAttributeValue.setObject(1, "[{\"" + attributeName + "\":\"" + value + "\" }]");
+        stFindByAttributeValue.setObject(1, gson.toJson(jsonArray));
 
         ResultSet rsFindPagesByAttributeValue = stFindByAttributeValue.executeQuery();
         List<Page> pages = new ArrayList<>();
@@ -139,7 +189,7 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     private String mapToJSON(Map<String, Attribute> attributes) {
-        return gson.toJson(attributes);
+        return gson.toJson(attributes, attributeType);
     }
 
     private Map<String, Attribute> jsonToMap(String json) {
