@@ -3,6 +3,7 @@ package de.eposcat.master.generators;
 import de.eposcat.master.approachImpl.EAV_DatabaseAdapter;
 import de.eposcat.master.approachImpl.IDatabaseAdapter;
 import de.eposcat.master.approachImpl.JSON_Postgres_DatabaseAdapter;
+import de.eposcat.master.connection.H2ConnectionManager;
 import de.eposcat.master.connection.PostgresConnectionManager;
 import de.eposcat.master.connection.RelationalApproach;
 import de.eposcat.master.generators.data.FillerAttributesStats;
@@ -45,15 +46,6 @@ public class GeneratorsTest {
     @Container
     public static GenericContainer postgres = new GenericContainer(DockerImageName.parse("mstrepos1/dynamic_datamodels:postgres")).withExposedPorts(5432).withEnv("POSTGRES_PASSWORD", "admin").waitingFor(Wait.forLogMessage(".*database system is ready to accept connections\\s*",2).withStartupTimeout(Duration.ofMinutes(2)));
 
-
-    //    @BeforeAll
-//    static void initDataBase() {
-//        H2ConnectionManager connectionManager = new H2ConnectionManager(RelationalApproach.EAV);
-//
-//        dbAdapter = new EAV_DatabaseAdapter(connectionManager);
-//        defaultAttribute = new AttributeBuilder().setType(AttributeType.String).setValue("A test value").createAttribute();
-//    }
-
     @BeforeAll
     static void initDataBase(){
         initPostgresDB();
@@ -73,6 +65,14 @@ public class GeneratorsTest {
         defaultAttribute = new AttributeBuilder().setType(AttributeType.String).setValue("A test value").createAttribute();
     }
 
+    static void initH2DB(){
+        H2ConnectionManager connectionManager = new H2ConnectionManager(RelationalApproach.EAV);
+        database = "H2";
+
+        dbAdapter = new EAV_DatabaseAdapter(connectionManager);
+        defaultAttribute = new AttributeBuilder().setType(AttributeType.String).setValue("A test value").createAttribute();
+    }
+
     @Test
     public void testGenerators() {
         try {
@@ -83,11 +83,11 @@ public class GeneratorsTest {
             log.info("Started Generating initial pages");
             Instant start = Instant.now();
 
-            int numberOfStartAttributes = 10000;
-            int meanNumberOfAttributes = 20;
-            int maxNumberOfAttributes = 7500;
+            int numberOfStartAttributes = 1000;
+            int meanNumberOfAttributes = 50;
+            int maxNumberOfAttributes = 500;
 
-            //TODO Put arguments into builder?
+            //TODO Put arguments into a builder?
             FillerAttributesStats filler = new FillerAttributesStats(numberOfStartAttributes, meanNumberOfAttributes, maxNumberOfAttributes);
 
             int numberOfStartEntities = 1000;
@@ -104,6 +104,7 @@ public class GeneratorsTest {
             log.info("Filler Attribute stats: numberOfStartAttributes: {}, meanNumberOfAttributes: {}, maxNumberOfAttributes, {}",
                     numberOfStartAttributes, meanNumberOfAttributes, maxNumberOfAttributes);
 
+            //Code used for generating db changes, not the current focus.
 //            ChangesGenerator generateChanges = new ChangesGenerator(startData.entityNames, startData.attributeNames, path, 1);
 //            generateChanges.generateChangeSets(100);
 //            ChangeRunner runner = new ChangeRunner(dbAdapter);
@@ -121,7 +122,6 @@ public class GeneratorsTest {
             log.info("Started finding 25% of pages per attValue");
             Instant startVal = Instant.now();
 
-            //Returns count 0 atm. -> probably bugged function, will switch to fixing tests in other branch now..
             int countVal = dbAdapter.findPagesByAttributeValue("fiftyFifty", new AttributeBuilder().setValue("true").setType(AttributeType.String).createAttribute()).size();
 
             Instant endVal = Instant.now();

@@ -20,6 +20,14 @@ public class StartDataGenerator {
         random = new Random(seed);
     }
 
+    /**
+     *
+     * @param numberOfStartEntities number of entities that should be created
+     * @param stats data for 'filler' attributes which have random names/values to create a good realistic environment for testing
+     * @param perfAttributes list of certain attributes with certain names and values which will be used as query parameters
+     * @return a StartData object containing the names of the created entities and attributes and all generated page objects.
+     *          The page objects must be added to the database manually.
+     */
     public StartData generateData(int numberOfStartEntities, FillerAttributesStats stats, List<PerformanceTestAttribute> perfAttributes) {
         String[] entityNames = new String[numberOfStartEntities];
         String[] attributeNames = new String[stats.getNumberOfStartAttributes()];
@@ -69,9 +77,12 @@ public class StartDataGenerator {
     }
 
     public int numberOfAttributes(int mean, int max) {
-        double number = random.nextGaussian() * 3 + mean;
-        number = Math.max(number, 0);
-        number = Math.min(number, max);
+        double number;
+
+        do {
+            number = random.nextGaussian() * 2 + mean;
+        } while (number < 0 || number > max);
+
         return (int) Math.round(number);
     }
 
