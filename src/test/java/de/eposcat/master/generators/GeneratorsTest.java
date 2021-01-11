@@ -1,5 +1,6 @@
 package de.eposcat.master.generators;
 
+import de.eposcat.master.approachImpl.EAV_DatabaseAdapter;
 import de.eposcat.master.approachImpl.IDatabaseAdapter;
 import de.eposcat.master.approachImpl.JSON_Postgres_DatabaseAdapter;
 import de.eposcat.master.connection.PostgresConnectionManager;
@@ -36,6 +37,9 @@ public class GeneratorsTest {
     static IDatabaseAdapter dbAdapter;
     static Attribute defaultAttribute;
 
+    private static final RelationalApproach approach = RelationalApproach.EAV;
+    private static String database;
+
     private static final Logger log = LoggerFactory.getLogger(GeneratorsTest.class);
 
     @Container
@@ -52,9 +56,20 @@ public class GeneratorsTest {
 
     @BeforeAll
     static void initDataBase(){
-        PostgresConnectionManager connectionManager = new PostgresConnectionManager(RelationalApproach.JSON, "localhost", postgres.getMappedPort(5432), "postgres", "admin");
+        initPostgresDB();
+    }
 
-        dbAdapter = new JSON_Postgres_DatabaseAdapter(connectionManager);
+    static void initPostgresDB(){
+        PostgresConnectionManager connectionManager = new PostgresConnectionManager(approach, "localhost", postgres.getMappedPort(5432), "postgres", "admin");
+        database = "PostgreSQL";
+
+        switch (approach){
+            case EAV: dbAdapter = new EAV_DatabaseAdapter(connectionManager);
+                break;
+            case JSON: dbAdapter = new JSON_Postgres_DatabaseAdapter(connectionManager);
+                break;
+        }
+
         defaultAttribute = new AttributeBuilder().setType(AttributeType.String).setValue("A test value").createAttribute();
     }
 
@@ -64,19 +79,30 @@ public class GeneratorsTest {
             String path = "test.txt";
             StartDataGenerator startDataGenerator = new StartDataGenerator(1);
 
+            log.info("Testing Approach: {}, Database: {}", approach, database);
             log.info("Started Generating initial pages");
             Instant start = Instant.now();
 
+            int numberOfStartAttributes = 10000;
+            int meanNumberOfAttributes = 20;
+            int maxNumberOfAttributes = 7500;
+
             //TODO Put arguments into builder?
-            FillerAttributesStats filler = new FillerAttributesStats(10, 2, 100);
-            StartData startData = startDataGenerator.generateData(100000, filler, getExampleAtt(new Random(1)));
+            FillerAttributesStats filler = new FillerAttributesStats(numberOfStartAttributes, meanNumberOfAttributes, maxNumberOfAttributes);
+
+            int numberOfStartEntities = 1000;
+
+            StartData startData = startDataGenerator.generateData(numberOfStartEntities, filler, getExampleAtt(new Random(1)));
 
             for (Page page : startData.pages) {
                 dbAdapter.createPageWithAttributes(page.getTypeName(), page.getAttributes());
             }
 
             Instant end = Instant.now();
-            log.info("Finished Generating initial pages, duration: {}", Duration.between(start,end));
+            log.info("Finished Generating {} initial pages, duration: {}",
+                    numberOfStartEntities, Duration.between(start,end));
+            log.info("Filler Attribute stats: numberOfStartAttributes: {}, meanNumberOfAttributes: {}, maxNumberOfAttributes, {}",
+                    numberOfStartAttributes, meanNumberOfAttributes, maxNumberOfAttributes);
 
 //            ChangesGenerator generateChanges = new ChangesGenerator(startData.entityNames, startData.attributeNames, path, 1);
 //            generateChanges.generateChangeSets(100);
@@ -96,7 +122,7 @@ public class GeneratorsTest {
             Instant startVal = Instant.now();
 
             //Returns count 0 atm. -> probably bugged function, will switch to fixing tests in other branch now..
-            int countVal = dbAdapter.findPagesByAttributeValue("fiftyFifty", "true").size();
+            int countVal = dbAdapter.findPagesByAttributeValue("fiftyFifty", new AttributeBuilder().setValue("true").setType(AttributeType.String).createAttribute()).size();
 
             Instant endVal = Instant.now();
             log.info("Finished finding 25% of pages per attValue, duration: {}, count: {}", Duration.between(startVal,endVal), countVal);
