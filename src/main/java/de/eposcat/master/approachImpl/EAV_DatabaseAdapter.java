@@ -281,6 +281,14 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         return pageList;
     }
 
+    /**
+     *
+     * @param attributeName the name of the attribute we are searching
+     * @param value the attribute including value we are searching, id and type are ignored in the EAV approach,
+     *              since attribute names are unique and every attribute has a certain type already saved in the db
+     * @return a List of Page Objects which have the matching attribute
+     * @throws SQLException
+     */
     @Override
     public List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException{
         PreparedStatement stFindPagesByAttributeValue = conn.prepareStatement(FIND_PAGE_BY_ATTRIBUTE_VALUE_QUERY);
