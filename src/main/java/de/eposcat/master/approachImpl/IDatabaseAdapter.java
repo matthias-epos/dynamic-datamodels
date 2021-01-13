@@ -11,6 +11,8 @@ public interface IDatabaseAdapter {
     Page createPage(String typename) throws SQLException;
     Page createPageWithAttributes(String typename, Map<String, Attribute> attributes) throws SQLException;
 
+    boolean deletePage(long pageId) throws SQLException;
+
     void updatePage(Page page) throws SQLException;
     Page loadPage(long pageId) throws SQLException;
     

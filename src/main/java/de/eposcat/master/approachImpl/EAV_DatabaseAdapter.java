@@ -16,6 +16,8 @@ import de.eposcat.master.model.Page;
 import de.eposcat.master.exceptions.BlException;
 import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.AttributeType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class EAV_DatabaseAdapter implements IDatabaseAdapter {
@@ -33,10 +35,13 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     private static final String GET_LAST_ATTRIBUTE_IDS_QUERY = "SELECT att_id FROM eav_values WHERE ent_id = ?";
     private static final String FIND_PAGE_BY_ATTRIBUTE_VALUE_QUERY = "SELECT eav_values.ent_id FROM attributes Inner JOIN eav_values ON eav_values.att_id = attributes.id WHERE attributes.name = ? AND eav_values.value = ?";
     private static final String FIND_PAGE_BY_ATTRIBUTE_QUERY = "SELECT eav_values.ent_id FROM attributes Inner JOIN eav_values ON eav_values.att_id = attributes.id WHERE attributes.name = ?";
+    private static final String REMOVE_PAGE_QUERY = "DELETE FROM entities WHERE id = ?";
 
     private final Connection conn;
     private final static String ENTITY_TABLE =  "entityTable";
     private final static String ATTRIBUTE_TABLE = "attributeTable";
+
+    private static final Logger log = LoggerFactory.getLogger(EAV_DatabaseAdapter.class);
 
     public EAV_DatabaseAdapter(AbstractConnectionManager connectionManager) {
         this.conn = connectionManager.getConnection();
@@ -74,6 +79,40 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         page.setAttributes(attributes);
         updatePage(page);
         return page;
+    }
+
+    @Override
+    public boolean deletePage(long pageId) throws SQLException{
+        if(pageId == -1){
+            return false;
+        }
+
+        return deletePage(loadPage(pageId));
+    }
+
+    public boolean deletePage(Page page) throws SQLException{
+        if(page == null || page.getId() == -1){
+            return false;
+        }
+
+        //Remove Attribute references
+        //Attributes in the Attribute table do not get removed, even if this was the last page referencing this attribute
+        page.getAttributes().values().forEach(attribute -> {
+            try {
+                removeAttributeValue(page.getId(), attribute.getId());
+            } catch (SQLException exception) {
+                //Streams and exceptions......
+                log.error(exception.getMessage());
+            }
+        });
+
+        //Remove page
+        PreparedStatement st = conn.prepareStatement(REMOVE_PAGE_QUERY);
+        st.setLong(1, page.getId());
+
+        int affectedRows = st.executeUpdate();
+
+        return (affectedRows > 0);
     }
 
     @Override
@@ -283,6 +322,10 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
 
     @Override
     public List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException{
+        if(attributeName == null){
+            throw new IllegalArgumentException();
+        }
+
         PreparedStatement stFindPagesByAttributeValue = conn.prepareStatement(FIND_PAGE_BY_ATTRIBUTE_VALUE_QUERY);
         stFindPagesByAttributeValue.setString(1, attributeName);
         stFindPagesByAttributeValue.setString(2, value.getValue().toString());

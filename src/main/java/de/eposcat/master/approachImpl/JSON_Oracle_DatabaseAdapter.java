@@ -58,7 +58,9 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
         if(affectedRows > 0) {
             ResultSet newRow = stCreatePage.getGeneratedKeys();
 
-            return new Page(getPageIdFromResultSet(newRow), typename);
+            Page page = new Page(getPageIdFromResultSet(newRow), typename);
+            page.setAttributes(attributes);
+            return page;
         }
 
         return null;
@@ -74,6 +76,28 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
         rsId.next();
 
         return rsId.getLong(1);
+    }
+
+    @Override
+    public boolean deletePage(long pageId) throws SQLException{
+        if(pageId == -1){
+            return false;
+        }
+
+        return deletePage(loadPage(pageId));
+    }
+
+    public boolean deletePage(Page page) throws SQLException{
+        if(page == null || page.getId() == -1){
+            return false;
+        }
+
+        PreparedStatement st = conn.prepareStatement("DELETE FROM pages WHERE ID = ?");
+        st.setLong(1, page.getId());
+
+        int affectedRows = st.executeUpdate();
+
+        return (affectedRows > 0);
     }
 
     @Override
@@ -139,9 +163,13 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
 
     @Override
     public List<Page> findPagesByAttributeName(String attributeName) throws SQLException{
+        if(attributeName == null){
+            throw new IllegalArgumentException();
+        }
+
         // Oracle String literals are stupid -> sqlInjection might be possible here...
         // see https://stackoverflow.com/questions/56948001/how-to-use-oracles-json-value-function-with-a-preparedstatement
-        String queryString = "SELECT * FROM pages WHERE json_value(attributes, '$.[*].name') = '" + attributeName +"')";
+        String queryString = "SELECT * FROM pages WHERE json_value(attributes, '$[*].name') = '" + attributeName +"'";
         
         PreparedStatement stFindByAttribute = conn.prepareStatement(queryString);
 
@@ -159,9 +187,13 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
 
     @Override
     public List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException{
+        if(attributeName == null){
+            throw new IllegalArgumentException();
+        }
+
         // Oracle String literals are stupid -> sqlInjection might be possible here...
         // see https://stackoverflow.com/questions/56948001/how-to-use-oracles-json-value-function-with-a-preparedstatement
-        String queryString = "SELECT * FROM pages WHERE json_exists(attributes, '$[*]?(@.name == \""+ attributeName + "\") && @.values[*]."+ value.getType().toString()+" == \""+ value.getValue().toString() +"\")')";
+        String queryString = "SELECT * FROM pages WHERE json_exists(attributes, '$[*]?(@.name == \""+ attributeName + "\" && @.values[*]."+ value.getType().toString()+" == \""+ value.getValue().toString() +"\")')";
         //Might need to look into performance of json_exists with filter vs json_value... (plus indezes for those)
 
         PreparedStatement stFindByAttributeValue = conn.prepareStatement(queryString);
@@ -179,7 +211,7 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
     }
 
     private String mapToJSON(Map<String, Attribute> attributes) {
-        return gson.toJson(attributes);
+        return gson.toJson(attributes, attributeType);
     }
 
     private Map<String, Attribute> jsonToMap(String json){
