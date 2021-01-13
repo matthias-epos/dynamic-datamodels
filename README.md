@@ -54,3 +54,13 @@ Currently, we inspect the capabilities of 2 databases:
 Since indexing JSON values in PostgreSQL requires simple JSON Objects, we could also consider using the key-value store of PostreSQL.
 
 -->
+
+## Running Tests
+
+The tests are based on [Docker](https://www.docker.com/) and [Testcontainers](https://www.testcontainers.org/). Install docker to make testing possible on you machine.  
+
+To make testing with the Oracle container bearable you can enable the *Reuse* feature of Testcontainers. To do so, you must opt-in for reusable containers inside your `~/.testcontainers.properties` or `D:\Users\<username>\.testcontainers.properties` file.  
+Add the line `testcontainers.reuse.enable=true` to enable reuse.  
+Starting the oracle container the first time will take at least 10 minutes. Without enabling reuse this happens every time a testclass is run.
+
+You can also follow [this guide.](https://rieckpil.de/reuse-containers-with-testcontainers-for-fast-integration-tests/) 
