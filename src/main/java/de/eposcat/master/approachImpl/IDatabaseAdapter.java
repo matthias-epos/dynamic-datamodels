@@ -41,7 +41,7 @@ public interface IDatabaseAdapter {
      * @throws SQLException if the implementation or database connection are malfunctioning
      * @throws de.eposcat.master.exceptions.BlException - if no entry with the same id as the page exists in the database
      */
-    void updatePage(@NotNull Page page) throws SQLException;
+    void updatePage(Page page) throws SQLException;
 
     /**
      * Retrieves the page with the given id from the database.

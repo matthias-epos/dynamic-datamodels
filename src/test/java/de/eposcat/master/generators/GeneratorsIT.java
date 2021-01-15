@@ -34,14 +34,14 @@ import java.util.Random;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @Testcontainers
-public class GeneratorsTest {
+public class GeneratorsIT {
     static IDatabaseAdapter dbAdapter;
     static Attribute defaultAttribute;
 
     private static final RelationalApproach approach = RelationalApproach.EAV;
     private static String database;
 
-    private static final Logger log = LoggerFactory.getLogger(GeneratorsTest.class);
+    private static final Logger log = LoggerFactory.getLogger(GeneratorsIT.class);
 
     @Container
     public static GenericContainer postgres = new GenericContainer(DockerImageName.parse("mstrepos1/dynamic_datamodels:postgres")).withExposedPorts(5432).withEnv("POSTGRES_PASSWORD", "admin").waitingFor(Wait.forLogMessage(".*database system is ready to accept connections\\s*",2).withStartupTimeout(Duration.ofMinutes(2)));
