@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
+import com.sun.istack.internal.NotNull;
 import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.Page;
 
@@ -29,7 +30,6 @@ public interface IDatabaseAdapter {
      */
     Page createPageWithAttributes(String typename, Map<String, Attribute> attributes) throws SQLException;
 
-
     boolean deletePage(long pageId) throws SQLException;
 
     /**
@@ -42,6 +42,7 @@ public interface IDatabaseAdapter {
      * @throws de.eposcat.master.exceptions.BlException - if no entry with the same id as the page exists in the database
      */
     void updatePage(Page page) throws SQLException;
+
 
     /**
      * Retrieves the page with the given id from the database.
@@ -73,7 +74,7 @@ public interface IDatabaseAdapter {
      * Returns all pages which have an attribute with the given name and value.
      *
      * @param attributeName the name of the attribute we are searching
-     * @param value the value of the attribute we are searching
+     * @param value the attribute including type and value we are searching, id is ignored
      * @return a List of matching pages
      * @throws SQLException if the implementation or database connection are malfunctioning
      */
