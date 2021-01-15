@@ -15,13 +15,16 @@ import de.eposcat.master.model.AttributeType;
 import de.eposcat.master.model.Page;
 import de.eposcat.master.serializer.AttributesDeserializer;
 import de.eposcat.master.serializer.AttributesSerializer;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Type;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -34,6 +37,7 @@ public class PageTest {
 
     static IDatabaseAdapter dbAdapter;
     static Attribute defaultAttribute;
+    static List<Long> addedPages = new ArrayList<>();
 
     @BeforeAll
     static void initDataBase() {
@@ -41,6 +45,19 @@ public class PageTest {
 
         dbAdapter = new EAV_DatabaseAdapter(connectionManager);
         defaultAttribute = new AttributeBuilder().setType(AttributeType.String).setValue("A test value").createAttribute();
+    }
+
+    @AfterEach
+    void removeAddedPages(){
+        for(Long id : addedPages){
+            try {
+                dbAdapter.deletePage(id);
+            } catch (SQLException exception){
+                exception.printStackTrace();
+            }
+        }
+
+        addedPages.clear();
     }
 
     @Test
@@ -57,15 +74,16 @@ public class PageTest {
         Gson gson = builder.create();
 
         for(int i = 1; i<99; i++){
-            Page page = null;
+            Page page;
             try {
                 page = dbAdapter.loadPage(i);
                 if(page == null){
                     break;
                 }
                 System.out.println("( \'"+page.getTypeName() +"\', \'" + gson.toJson(page.getAttributes(), attributeType) + "\' ),");
-            } catch (SQLException throwables) {
-                throwables.printStackTrace();
+            } catch (SQLException exception
+            ) {
+                exception.printStackTrace();
             }
         }
 
@@ -76,11 +94,14 @@ public class PageTest {
         try {
             //returned Pages must have an id, the given type and no attributes
             Page page = dbAdapter.createPage("testType");
+
             assertThat(page.getId(), not(-1));
             assertThat(page.getTypeName(), is("testType"));
             assertThat(page.getAttributes().isEmpty(), is(true));
 
             assertThat(dbAdapter.loadPage(page.getId()), is(page));
+
+            addedPages.add(page.getId());
         } catch (SQLException exception) {
             //No test should ever throw a SQL exception
             fail();
@@ -113,7 +134,7 @@ public class PageTest {
             assertThat(page.getAttribute("testAttr").getType(), is(AttributeType.String));
             assertThat(page.getAttribute("testAttr").getValue(), is("test"));
 
-
+            addedPages.add(page.getId());
          } catch (SQLException exception) {
             fail("No test should ever throw a SQL exception");
             exception.printStackTrace();
@@ -136,6 +157,34 @@ public class PageTest {
     }
 
     @Test
+    public void deletePage(){
+        try {
+            Page page = dbAdapter.createPage("deleteThisPageAgain");
+            page.addAttribute("deleteAttribute", defaultAttribute);
+            dbAdapter.updatePage(page);
+
+            assertThat(dbAdapter.deletePage(page.getId()), is(true));
+            assertNull(dbAdapter.loadPage(page.getId()));
+        } catch (SQLException exception
+        ) {
+            fail();
+            exception.printStackTrace();
+        }
+    }
+
+    @Test
+    public void deleteNonExistentPage(){
+        try {
+            assertThat(dbAdapter.deletePage(-1), is(false));
+            assertThat(dbAdapter.deletePage(9999999), is(false));
+        } catch (SQLException exception
+        ) {
+            fail();
+            exception.printStackTrace();
+        }
+    }
+
+    @Test
     public void loadPage(){
         try {
             Page page = dbAdapter.loadPage(1);
@@ -143,9 +192,10 @@ public class PageTest {
             assertThat(page.getTypeName(), is("single"));
             assertThat(page.getAttributes().isEmpty(), is(false));
             assertThat(page.getAttribute("singleAttribute").getValue(), is("test"));
-        } catch (SQLException throwables) {
+        } catch (SQLException exception
+        ) {
             fail();
-            throwables.printStackTrace();
+            exception.printStackTrace();
         }
     }
 
@@ -154,8 +204,9 @@ public class PageTest {
         try {
             Page page = dbAdapter.loadPage(-1);
             assertNull(page);
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
+        } catch (SQLException exception
+        ) {
+            exception.printStackTrace();
             fail();
         }
     }
@@ -194,6 +245,8 @@ public class PageTest {
             assertThat(dbPage.getTypeName(), is(page.getTypeName()));
             assertThat(dbPage.getAttribute("updatePageAtt").getValue(), is(page.getAttribute("updatePageAtt").getValue()));
             assertThat(dbPage.getAttribute("updatePageAtt").getType(), is(page.getAttribute("updatePageAtt").getType()));
+
+            addedPages.add(page.getId());
         } catch (SQLException e) {
             fail();
             e.printStackTrace();
@@ -247,7 +300,7 @@ public class PageTest {
 
             //empty name is allowed
 
-            //fail on null attribute
+            //fail on null attribute name
             assertThrows(IllegalArgumentException.class, () -> dbAdapter.findPagesByAttributeName(null));
         } catch (SQLException e) {
             e.printStackTrace();
@@ -269,8 +322,8 @@ public class PageTest {
             assertThat(dbAdapter.findPagesByAttributeValue("singleAttribute", new AttributeBuilder().setValue("non-existing value").setType(AttributeType.String).createAttribute()).size(), is(0));
             assertThat(dbAdapter.findPagesByAttributeValue("not-existing attribute", new AttributeBuilder().setValue("test").setType(AttributeType.String).createAttribute()).size(), is(0));
 
-            //fail on null attribute
-
+            //fail on null attribute name
+            assertThrows(IllegalArgumentException.class, () -> dbAdapter.findPagesByAttributeValue(null, new AttributeBuilder().setValue("non-existing value").setType(AttributeType.String).createAttribute()));
 
         } catch (SQLException e) {
             e.printStackTrace();

@@ -3,8 +3,6 @@ package de.eposcat.master.approachImpl;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
-
-import com.sun.istack.internal.NotNull;
 import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.Page;
 
@@ -30,6 +28,8 @@ public interface IDatabaseAdapter {
      */
     Page createPageWithAttributes(String typename, Map<String, Attribute> attributes) throws SQLException;
 
+    boolean deletePage(long pageId) throws SQLException;
+
     /**
      * Merges any changes to this object with the database entry with the corresponding id.
      * This method will not do any changes to the database if there are no matching database entries.
@@ -39,7 +39,8 @@ public interface IDatabaseAdapter {
      * @throws SQLException if the implementation or database connection are malfunctioning
      * @throws de.eposcat.master.exceptions.BlException - if no entry with the same id as the page exists in the database
      */
-    void updatePage(@NotNull Page page) throws SQLException;
+    void updatePage(Page page) throws SQLException;
+
 
     /**
      * Retrieves the page with the given id from the database.

@@ -68,6 +68,28 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     @Override
+    public boolean deletePage(long pageId) throws SQLException{
+        if(pageId == -1){
+            return false;
+        }
+
+        return deletePage(loadPage(pageId));
+    }
+
+    public boolean deletePage(Page page) throws SQLException{
+        if(page == null || page.getId() == -1){
+            return false;
+        }
+
+        PreparedStatement st = conn.prepareStatement("DELETE FROM pages WHERE ID = ?");
+        st.setLong(1, page.getId());
+
+        int affectedRows = st.executeUpdate();
+
+        return (affectedRows > 0);
+    }
+
+    @Override
     public void updatePage(Page page) throws SQLException {
         if(page == null){
             throw new IllegalArgumentException("page must not be null");
@@ -171,6 +193,9 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
 
     @Override
     public List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException {
+        if(attributeName == null){
+            throw new IllegalArgumentException();
+        }
 
         JsonArray jsonArray = getAttributeArray(attributeName, value);
         PreparedStatement stFindByAttributeValue = conn.prepareStatement("SELECT * FROM pages WHERE attributes::jsonb @> ?::jsonb");
