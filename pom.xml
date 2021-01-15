@@ -11,6 +11,32 @@
   <name>Dynamic Data Model</name>
   <url>https://github.com/matthias-epos/dynamic-datamodels</url>
 
+  <profiles>
+    <profile>
+      <id>Windows</id>
+      <activation>
+        <os>
+          <family>Windows</family>
+        </os>
+      </activation>
+      <properties>
+        <script.extension>.bat</script.extension>
+      </properties>
+    </profile>
+    <profile>
+      <id>unix</id>
+      <activation>
+        <os>
+          <family>unix</family>
+        </os>
+      </activation>
+      <properties>
+        <script.extension>.sh</script.extension>
+      </properties>
+    </profile>
+  </profiles>
+
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
@@ -181,20 +207,20 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
+        <configuration>
+          <executable>buildDockerImages${script.extension}</executable>
+          <workingDirectory>docker/</workingDirectory>
+        </configuration>
         <version>1.6.0</version>
         <executions>
           <execution>
-            <id>runbatchfile</id>
-            <phase>verify</phase>
+            <id>build-docker-images</id>
+            <phase>pre-integration-test</phase>
             <goals>
               <goal>exec</goal>
             </goals>
           </execution>
         </executions>
-        <configuration>
-          <executable>buildDockerImages.bat</executable>
-          <workingDirectory>docker/</workingDirectory>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
