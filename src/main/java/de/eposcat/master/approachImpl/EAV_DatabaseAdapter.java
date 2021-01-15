@@ -10,13 +10,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.sun.istack.internal.NotNull;
 import de.eposcat.master.connection.AbstractConnectionManager;
+import de.eposcat.master.model.AttributeBuilder;
+import de.eposcat.master.model.Page;
 import de.eposcat.master.exceptions.BlException;
 import de.eposcat.master.model.Attribute;
-import de.eposcat.master.model.AttributeBuilder;
 import de.eposcat.master.model.AttributeType;
-import de.eposcat.master.model.Page;
 
 
 public class EAV_DatabaseAdapter implements IDatabaseAdapter {
@@ -44,7 +43,6 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     @Override
-    @NotNull
     public Page createPage(String typeName) throws SQLException {
         if(typeName == null || typeName.isEmpty()){
             throw new IllegalArgumentException("Typename has to be a non empty String");
@@ -283,11 +281,19 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         return pageList;
     }
 
+    /**
+     *
+     * @param attributeName the name of the attribute we are searching
+     * @param value the attribute including value we are searching, id and type are ignored in the EAV approach,
+     *              since attribute names are unique and every attribute has a certain type already saved in the db
+     * @return a List of Page Objects which have the matching attribute
+     * @throws SQLException
+     */
     @Override
-    public List<Page> findPagesByAttributeValue(String attributeName, Object value) throws SQLException{
+    public List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException{
         PreparedStatement stFindPagesByAttributeValue = conn.prepareStatement(FIND_PAGE_BY_ATTRIBUTE_VALUE_QUERY);
         stFindPagesByAttributeValue.setString(1, attributeName);
-        stFindPagesByAttributeValue.setString(2, value.toString());
+        stFindPagesByAttributeValue.setString(2, value.getValue().toString());
         ResultSet rsPages = stFindPagesByAttributeValue.executeQuery();
 
         List<Page> pageList= new ArrayList<>();

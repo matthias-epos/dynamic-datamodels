@@ -71,9 +71,9 @@ public interface IDatabaseAdapter {
      * Returns all pages which have an attribute with the given name and value.
      *
      * @param attributeName the name of the attribute we are searching
-     * @param value the value of the attribute we are searching
+     * @param value the attribute including type and value we are searching, id is ignored
      * @return a List of matching pages
      * @throws SQLException if the implementation or database connection are malfunctioning
      */
-    List<Page> findPagesByAttributeValue(String attributeName, Object value) throws SQLException;
+    List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException;
 }

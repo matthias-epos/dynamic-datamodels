@@ -12,20 +12,29 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import de.eposcat.master.connection.AbstractConnectionManager;
+import de.eposcat.master.exceptions.BlException;
 import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.Page;
+import de.eposcat.master.serializer.AttributesDeserializer;
+import de.eposcat.master.serializer.AttributesSerializer;
 
 public class JSON_Oracle_DatabaseAdapter implements IDatabaseAdapter {
     
     private final Connection conn;
-    private final Gson gson = new Gson();
+    private final Gson gson;
     private final Type attributeType = new TypeToken<Map<String, Attribute>>(){}.getType();
     
     public JSON_Oracle_DatabaseAdapter(AbstractConnectionManager connectionManager) {
         this.conn = connectionManager.getConnection();
+
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(attributeType, new AttributesSerializer());
+        builder.registerTypeAdapter(attributeType, new AttributesDeserializer());
+        gson = builder.create();
     }
 
     @Override
@@ -35,6 +44,10 @@ public class JSON_Oracle_DatabaseAdapter implements IDatabaseAdapter {
 
     @Override
 public Page createPageWithAttributes(String typename, Map<String, Attribute> attributes) throws SQLException{
+        if(typename == null || typename.isEmpty() || attributes == null){
+            throw new IllegalArgumentException();
+        }
+
         PreparedStatement stCreatePage = conn.prepareStatement("INSERT INTO pages(type, attributes) VALUES (?,?)", Statement.RETURN_GENERATED_KEYS);
         stCreatePage.setString(1, typename);
         stCreatePage.setObject(2, mapToJSON(attributes));
@@ -64,11 +77,19 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
 
     @Override
     public void updatePage(Page page) throws SQLException{
+        if(page == null){
+            throw new IllegalArgumentException("page must not be null");
+        }
+
         PreparedStatement stUpdatePage = conn.prepareStatement("UPDATE pages SET type = ?, attributes= ? WHERE id = ?");
         stUpdatePage.setString(1, page.getTypeName());
         stUpdatePage.setString(2, mapToJSON(page.getAttributes()));
         stUpdatePage.setLong(3, page.getId());
-        stUpdatePage.executeUpdate();
+        int affectedRows = stUpdatePage.executeUpdate();
+
+        if(affectedRows != 1) {
+            throw new BlException("Page with id= "+ page.getId()+", type= " + page.getTypeName()+" is not tracked by database, try create pageWithAttributes first");
+        }
     }
 
 
@@ -86,12 +107,16 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
             
             return page;
         } else {
-            throw new SQLException("Does not exist");
+            return null;
         }
     }
 
     @Override
     public List<Page> findPagesByType(String type) throws SQLException {
+        if(type == null || type.isEmpty()){
+            throw new IllegalArgumentException();
+        }
+
         PreparedStatement stFindByType = conn.prepareStatement("SELECT * FROM pages WHERE type = ?");
         stFindByType.setString(1,type);
 
@@ -124,9 +149,9 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
      */
     @Override
     public List<Page> findPagesByAttributeName(String attributeName) throws SQLException{
-        // Oracle String literals are stupid -> sqlInjection would be possible here...
+        // Oracle String literals are stupid -> sqlInjection might be possible here...
         // see https://stackoverflow.com/questions/56948001/how-to-use-oracles-json-value-function-with-a-preparedstatement
-        String queryString = "SELECT * FROM pages WHERE json_exists(attributes, '$." + attributeName + "')";
+        String queryString = "SELECT * FROM pages WHERE json_value(attributes, '$.[*].name') = '" + attributeName +"')";
         
         PreparedStatement stFindByAttribute = conn.prepareStatement(queryString);
 
@@ -155,13 +180,13 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
      * @throws SQLException if the implementation or database connection are malfunctioning
      */
     @Override
-    public List<Page> findPagesByAttributeValue(String attributeName, Object value) throws SQLException{
-        // Oracle String literals are stupid -> sqlInjection would be possible here...
+    public List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException{
+        // Oracle String literals are stupid -> sqlInjection might be possible here...
         // see https://stackoverflow.com/questions/56948001/how-to-use-oracles-json-value-function-with-a-preparedstatement
-        String queryString = "SELECT * FROM pages WHERE json_value(attributes, '$."+ attributeName +".value') = ?";
-        
+        String queryString = "SELECT * FROM pages WHERE json_exists(attributes, '$[*]?(@.name == \""+ attributeName + "\") && @.values[*]."+ value.getType().toString()+" == \""+ value.getValue().toString() +"\")')";
+        //Might need to look into performance of json_exists with filter vs json_value... (plus indezes for those)
+
         PreparedStatement stFindByAttributeValue = conn.prepareStatement(queryString);
-        stFindByAttributeValue.setObject(1,  value);
         
         ResultSet rsFindPagesByAttributeValue = stFindByAttributeValue.executeQuery();
         List<Page> pages = new ArrayList<>();

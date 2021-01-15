@@ -1,6 +1,9 @@
 package de.eposcat.master;
 
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import de.eposcat.master.approachImpl.EAV_DatabaseAdapter;
 import de.eposcat.master.approachImpl.IDatabaseAdapter;
 import de.eposcat.master.connection.H2ConnectionManager;
@@ -10,12 +13,16 @@ import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.AttributeBuilder;
 import de.eposcat.master.model.AttributeType;
 import de.eposcat.master.model.Page;
+import de.eposcat.master.serializer.AttributesDeserializer;
+import de.eposcat.master.serializer.AttributesSerializer;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -34,6 +41,34 @@ public class PageTest {
 
         dbAdapter = new EAV_DatabaseAdapter(connectionManager);
         defaultAttribute = new AttributeBuilder().setType(AttributeType.String).setValue("A test value").createAttribute();
+    }
+
+    @Test
+    @Disabled
+    public void geTestDataForJsonMethod(){
+        //TODO Small helper to get json database data, probably should be placed somewhere else
+        GsonBuilder builder = new GsonBuilder();
+
+        Type attributeType = new TypeToken<Map<String, Attribute>>() {}.getType();
+
+        builder.registerTypeAdapter(attributeType, new AttributesSerializer());
+        builder.registerTypeAdapter(attributeType, new AttributesDeserializer());
+
+        Gson gson = builder.create();
+
+        for(int i = 1; i<99; i++){
+            Page page = null;
+            try {
+                page = dbAdapter.loadPage(i);
+                if(page == null){
+                    break;
+                }
+                System.out.println("( \'"+page.getTypeName() +"\', \'" + gson.toJson(page.getAttributes(), attributeType) + "\' ),");
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+        }
+
     }
 
     @Test
@@ -120,8 +155,8 @@ public class PageTest {
             Page page = dbAdapter.loadPage(-1);
             assertNull(page);
         } catch (SQLException throwables) {
-            fail();
             throwables.printStackTrace();
+            fail();
         }
     }
 
@@ -215,8 +250,8 @@ public class PageTest {
             //fail on null attribute
             assertThrows(IllegalArgumentException.class, () -> dbAdapter.findPagesByAttributeName(null));
         } catch (SQLException e) {
-            fail();
             e.printStackTrace();
+            fail();
         }
     }
 
@@ -227,12 +262,12 @@ public class PageTest {
 
         try {
             //one hit, multiple hits, no hit
-            assertThat(dbAdapter.findPagesByAttributeValue("singleAttribute", "test").size(), is(1));
-            assertThat(dbAdapter.findPagesByAttributeValue("tenAttribute", "firstHalf").size(), is(5));
+            assertThat(dbAdapter.findPagesByAttributeValue("singleAttribute", new AttributeBuilder().setValue("test").setType(AttributeType.String).createAttribute()).size(), is(1));
+            assertThat(dbAdapter.findPagesByAttributeValue("tenAttribute", new AttributeBuilder().setValue("firstHalf").setType(AttributeType.String).createAttribute()).size(), is(5));
 
 
-            assertThat(dbAdapter.findPagesByAttributeValue("singleAttribute", "non-existing value").size(), is(0));
-            assertThat(dbAdapter.findPagesByAttributeValue("not-existing attribute", "test").size(), is(0));
+            assertThat(dbAdapter.findPagesByAttributeValue("singleAttribute", new AttributeBuilder().setValue("non-existing value").setType(AttributeType.String).createAttribute()).size(), is(0));
+            assertThat(dbAdapter.findPagesByAttributeValue("not-existing attribute", new AttributeBuilder().setValue("test").setType(AttributeType.String).createAttribute()).size(), is(0));
 
             //fail on null attribute
 
