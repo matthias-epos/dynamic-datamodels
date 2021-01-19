@@ -17,6 +17,7 @@ INSERT INTO pages (type, attributes) VALUES
 ( 'ten', '[{"name":"tenAttribute","values":[{"String":"secondHalf"}]}]' ),
 ( 'rand', '[]' ),
 ( 'rand', '[]' ),
-( 'rand', '[]' );
+( 'rand', '[]' ),
+( 'complex', '[{"name":"moreAttribute3","values":[{"String":"3"}]},{"name":"moreAttribute4","values":[{"String":"4"}]},{"name":"moreAttribute1","values":[{"String":"1"}]},{"name":"moreAttribute2","values":[{"String":"2"}]}]' );
 
 EOSQL

@@ -37,6 +37,11 @@ public class PageTest {
 
     static IDatabaseAdapter dbAdapter;
     static Attribute defaultAttribute;
+
+    static Attribute moreAttribute1 = new AttributeBuilder().setType(AttributeType.String).setValue("1").createAttribute();
+    static Attribute moreAttribute2 = new AttributeBuilder().setType(AttributeType.String).setValue("2").createAttribute();
+    static Attribute moreAttribute3 = new AttributeBuilder().setType(AttributeType.String).setValue("3").createAttribute();
+
     static List<Long> addedPages = new ArrayList<>();
 
     @BeforeAll
@@ -298,6 +303,9 @@ public class PageTest {
             assertThat(dbAdapter.findPagesByAttributeName("tenAttribute").size(), is(10));
             assertThat(dbAdapter.findPagesByAttributeName("this attribute does not exist").size(), is(0));
 
+            //works with pages that have multiple attributes
+            assertThat(dbAdapter.findPagesByAttributeName("moreAttribute3").size(), is(1));
+
             //empty name is allowed
 
             //fail on null attribute name
@@ -322,13 +330,59 @@ public class PageTest {
             assertThat(dbAdapter.findPagesByAttributeValue("singleAttribute", new AttributeBuilder().setValue("non-existing value").setType(AttributeType.String).createAttribute()).size(), is(0));
             assertThat(dbAdapter.findPagesByAttributeValue("not-existing attribute", new AttributeBuilder().setValue("test").setType(AttributeType.String).createAttribute()).size(), is(0));
 
+            //works with pages that have multiple attributes
+            assertThat(dbAdapter.findPagesByAttributeValue("moreAttribute3", new AttributeBuilder().setValue("3").setType(AttributeType.String).createAttribute()).size(), is(1));
+
             //fail on null attribute name
             assertThrows(IllegalArgumentException.class, () -> dbAdapter.findPagesByAttributeValue(null, new AttributeBuilder().setValue("non-existing value").setType(AttributeType.String).createAttribute()));
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    public void loadComplexPage(){
+        try {
+            Page page = dbAdapter.findPagesByType("complex").get(0);
+
+            assertThat(page.getAttributes().size(), is(4));
+
+            assertThat(page.getAttribute("moreAttribute1").getValue(), is("1"));
+            assertThat(page.getAttribute("moreAttribute2").getValue(), is("2"));
+            assertThat(page.getAttribute("moreAttribute3").getValue(), is("3"));
+            assertThat(page.getAttribute("moreAttribute4").getValue(), is("4"));
+
+        } catch (SQLException throwables) {
+            fail();
+            throwables.printStackTrace();
+        }
+    }
+
+    @Test
+    public void createComplexPage(){
+        try {
+            Page page = new Page("complex2");
+
+            page.addAttribute("more1", moreAttribute1);
+            page.addAttribute("more2", moreAttribute2);
+            page.addAttribute("more3", moreAttribute3);
+
+            Page dbPage = dbAdapter.createPageWithAttributes(page.getTypeName(), page.getAttributes());
+
+            //Should stay the same, but for safety
+            dbPage = dbAdapter.loadPage(dbPage.getId());
+
+            assertThat(dbPage.getAttributes().size(), is(3));
+
+            assertThat(dbPage.getAttribute("more1").getValue(), is("1"));
+            assertThat(dbPage.getAttribute("more2").getValue(), is("2"));
+            assertThat(dbPage.getAttribute("more3").getValue(), is("3"));
 
 
+        } catch (SQLException throwables) {
+            fail();
+            throwables.printStackTrace();
+        }
     }
 }

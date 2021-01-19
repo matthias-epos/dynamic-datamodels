@@ -8,10 +8,7 @@ import de.eposcat.master.model.AttributeBuilder;
 import de.eposcat.master.model.AttributeType;
 import de.eposcat.master.model.Page;
 
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class StartDataGenerator {
     private final Random random;
@@ -28,7 +25,7 @@ public class StartDataGenerator {
      * @return a StartData object containing the names of the created entities and attributes and all generated page objects.
      *          The page objects must be added to the database manually.
      */
-    public StartData generateData(int numberOfStartEntities, FillerAttributesStats stats, List<PerformanceTestAttribute> perfAttributes) {
+    public StartData generateStartData(int numberOfStartEntities, FillerAttributesStats stats, List<PerformanceTestAttribute> perfAttributes) {
         String[] entityNames = new String[numberOfStartEntities];
         String[] attributeNames = new String[stats.getNumberOfStartAttributes()];
 
@@ -51,16 +48,26 @@ public class StartDataGenerator {
             }
 
             //Generate Performance Test Attributes (Fixed names, certain probabilities, certain values)
-            for (PerformanceTestAttribute testAttribute : perfAttributes) {
-                if (random.nextDouble() < testAttribute.getOccurrencePercentage() / 100) {
-                    page.addAttribute(testAttribute.getAttributeName(), new Attribute(AttributeType.String, testAttribute.getValueGenerator().get()));
-                }
-            }
+            addPerformanceAttributes(perfAttributes, page);
 
             pages.add(page);
         }
 
         return new StartData(entityNames, attributeNames, pages);
+    }
+
+    public void addPerformanceAttributes(List<PerformanceTestAttribute> perfAttributes, Page page) {
+        for (PerformanceTestAttribute testAttribute : perfAttributes) {
+            if (random.nextDouble() < testAttribute.getOccurrencePercentage() / 100) {
+                page.addAttribute(testAttribute.getAttributeName(), new Attribute(AttributeType.String, testAttribute.getValueGenerator().get()));
+            }
+        }
+    }
+
+    public void addPerformanceAttributesToPages(List<PerformanceTestAttribute> perfAttributes, Collection<Page> pages) {
+        for (Page page : pages) {
+            addPerformanceAttributes(perfAttributes, page);
+        }
     }
 
     private void fillWithRandomNames(String[] entityNames) {

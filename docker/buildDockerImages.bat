@@ -5,9 +5,10 @@ echo If creating/starting the images/containers fails, make sure to use linux-st
 echo Building postgres image
 docker build -t mstrepos1/dynamic_datamodels:postgres --rm ./postgres-docker/
 
-echo Building vanilla oracle image which ours is based on (not available in repo)
-docker build -t oracle/database:18.4.0-xe -f Dockerfile.xe --rm ./vanilla-oracle-docker/18.4.0/
+echo Building vanilla oracle image if it does not exist yet; can't just pull because oracle; if this step does not work follow the instructions at https://github.com/oracle/docker-images/tree/master/OracleDatabase/SingleInstance to get the base image)
+docker image inspect oracle/database:18.4.0-xe  >NUL 2>&1
+IF %ERRORLEVEL% NEQ 0 (docker build -t oracle/database:18.4.0-xe -f vanilla-oracle-docker/18.4.0/Dockerfile.xe --rm ./vanilla-oracle-docker/18.4.0/) else (echo Vanilla OracleDB exists, skipping building new image)
 
-echo Building oracle image
+echo Building oracle image with our changes
 docker build -t mstrepos1/dynamic_datamodels:oracle --rm ./oracle-docker/
 

@@ -41,9 +41,14 @@ INSERT  INTO entities (typename) VALUES('ten');
 INSERT  INTO entities (typename) VALUES('rand');
 INSERT  INTO entities (typename) VALUES('rand');
 INSERT  INTO entities (typename) VALUES('rand');
+INSERT  INTO entities (typename) VALUES('complex');
 
 INSERT INTO attributes (datatype, name ) VALUES ( 'String', 'singleAttribute' );
 INSERT INTO attributes (datatype, name ) VALUES ( 'String', 'tenAttribute' );
+INSERT INTO attributes (datatype, name ) VALUES ( 'String', 'moreAttribute1' );
+INSERT INTO attributes (datatype, name ) VALUES ( 'String', 'moreAttribute2' );
+INSERT INTO attributes (datatype, name ) VALUES ( 'String', 'moreAttribute3' );
+INSERT INTO attributes (datatype, name ) VALUES ( 'String', 'moreAttribute4' );
 
 INSERT  INTO eav_values (ent_id, att_id, value) VALUES ( 1,1, 'test' );
 INSERT  INTO eav_values (ent_id, att_id, value) VALUES ( 2,2, 'firstHalf' );
@@ -56,5 +61,9 @@ INSERT  INTO eav_values (ent_id, att_id, value) VALUES ( 8,2, 'secondHalf' );
 INSERT  INTO eav_values (ent_id, att_id, value) VALUES ( 9,2, 'secondHalf' );
 INSERT  INTO eav_values (ent_id, att_id, value) VALUES ( 10,2, 'secondHalf' );
 INSERT  INTO eav_values (ent_id, att_id, value) VALUES ( 11,2, 'secondHalf' );
+INSERT  INTO eav_values (ent_id, att_id, value) VALUES ( 15,3, '1' );
+INSERT  INTO eav_values (ent_id, att_id, value) VALUES ( 15,4, '2' );
+INSERT  INTO eav_values (ent_id, att_id, value) VALUES ( 15,5, '3' );
+INSERT  INTO eav_values (ent_id, att_id, value) VALUES ( 15,6, '4' );
 exit;
 EOSQL

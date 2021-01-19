@@ -179,7 +179,7 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
 
         // Oracle String literals are stupid -> sqlInjection might be possible here...
         // see https://stackoverflow.com/questions/56948001/how-to-use-oracles-json-value-function-with-a-preparedstatement
-        String queryString = "SELECT * FROM pages WHERE json_value(attributes, '$[*].name') = '" + attributeName +"'";
+        String queryString = "SELECT * FROM pages WHERE json_exists(attributes, '$[*]?(@.name == \"" + attributeName + "\")')";
         
         PreparedStatement stFindByAttribute = conn.prepareStatement(queryString);
 
