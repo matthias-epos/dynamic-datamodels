@@ -21,6 +21,7 @@ import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.Page;
 import de.eposcat.master.serializer.AttributesDeserializer;
 import de.eposcat.master.serializer.AttributesSerializer;
+import org.apache.commons.dbutils.DbUtils;
 
 public class JSON_Oracle_DatabaseAdapter implements IDatabaseAdapter {
     
@@ -48,33 +49,52 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
             throw new IllegalArgumentException();
         }
 
-        PreparedStatement stCreatePage = conn.prepareStatement("INSERT INTO pages(type, attributes) VALUES (?,?)", Statement.RETURN_GENERATED_KEYS);
-        stCreatePage.setString(1, typename);
-        stCreatePage.setObject(2, mapToJSON(attributes));
+        PreparedStatement stCreatePage = null;
+        ResultSet newRow = null;
 
-        int affectedRows = stCreatePage.executeUpdate();
+        try{
+            stCreatePage = conn.prepareStatement("INSERT INTO pages(type, attributes) VALUES (?,?)", Statement.RETURN_GENERATED_KEYS);
+            stCreatePage.setString(1, typename);
+            stCreatePage.setObject(2, mapToJSON(attributes));
 
-        if(affectedRows > 0) {
-            ResultSet newRow = stCreatePage.getGeneratedKeys();
+            int affectedRows = stCreatePage.executeUpdate();
 
-            Page page = new Page(getPageIdFromResultSet(newRow), typename);
-            page.setAttributes(attributes);
-            return page;
+            if(affectedRows > 0) {
+                newRow = stCreatePage.getGeneratedKeys();
+
+                Page page = new Page(getPageIdFromResultSet(newRow), typename);
+                page.setAttributes(attributes);
+
+                return page;
+            }
+
+            return null;
+        } finally {
+            DbUtils.close(stCreatePage);
+            DbUtils.close(newRow);
         }
-
-        return null;
     }
 
     private long getPageIdFromResultSet(ResultSet rs) throws SQLException{
         rs.next();
-        String query = "SELECT id FROM pages WHERE ROWID = ?";
-        PreparedStatement st = conn.prepareStatement(query);
-        st.setRowId(1, rs.getRowId(1));
 
-        ResultSet rsId = st.executeQuery();
-        rsId.next();
+        PreparedStatement st = null;
+        ResultSet rsId = null;
 
-        return rsId.getLong(1);
+        try {
+            String query = "SELECT id FROM pages WHERE ROWID = ?";
+            st = conn.prepareStatement(query);
+            st.setRowId(1, rs.getRowId(1));
+
+            rsId = st.executeQuery();
+            rsId.next();
+
+            long id = rsId.getLong(1);
+            return id;
+        } finally {
+            DbUtils.close(rsId);
+            DbUtils.close(st);
+        }
     }
 
     @Override
@@ -91,12 +111,18 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
             return false;
         }
 
-        PreparedStatement st = conn.prepareStatement("DELETE FROM pages WHERE ID = ?");
-        st.setLong(1, page.getId());
+        PreparedStatement st = null;
 
-        int affectedRows = st.executeUpdate();
+        try{
+            st = conn.prepareStatement("DELETE FROM pages WHERE ID = ?");
+            st.setLong(1, page.getId());
 
-        return (affectedRows > 0);
+            int affectedRows = st.executeUpdate();
+
+            return (affectedRows > 0);
+        } finally {
+            DbUtils.close(st);
+        }
     }
 
     @Override
@@ -105,33 +131,45 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
             throw new IllegalArgumentException("page must not be null");
         }
 
-        PreparedStatement stUpdatePage = conn.prepareStatement("UPDATE pages SET type = ?, attributes= ? WHERE id = ?");
-        stUpdatePage.setString(1, page.getTypeName());
-        stUpdatePage.setString(2, mapToJSON(page.getAttributes()));
-        stUpdatePage.setLong(3, page.getId());
-        int affectedRows = stUpdatePage.executeUpdate();
+        PreparedStatement stUpdatePage = null;
 
-        if(affectedRows != 1) {
-            throw new BlException("Page with id= "+ page.getId()+", type= " + page.getTypeName()+" is not tracked by database, try create pageWithAttributes first");
+        try {
+            stUpdatePage= conn.prepareStatement("UPDATE pages SET type = ?, attributes= ? WHERE id = ?");
+            stUpdatePage.setString(1, page.getTypeName());
+            stUpdatePage.setString(2, mapToJSON(page.getAttributes()));
+            stUpdatePage.setLong(3, page.getId());
+            int affectedRows = stUpdatePage.executeUpdate();
+
+            if(affectedRows != 1) {
+                throw new BlException("Page with id= "+ page.getId()+", type= " + page.getTypeName()+" is not tracked by database, try create pageWithAttributes first");
+            }
+        } finally {
+            DbUtils.close(stUpdatePage);
         }
     }
 
 
     @Override
     public Page loadPage(long pageId) throws SQLException{
-        PreparedStatement stLoadPage = conn.prepareStatement("SELECT * FROM pages WHERE id = ?");
-        stLoadPage.setLong(1, pageId);
-        
-        ResultSet rsLoadPage = stLoadPage.executeQuery();
-        
-        if(rsLoadPage.next()) {
-            Page page = new Page(rsLoadPage.getInt("id"), rsLoadPage.getString("type"));
-            
-            page.setAttributes(jsonToMap(rsLoadPage.getString("attributes")));
-            
-            return page;
-        } else {
-            return null;
+        PreparedStatement stLoadPage = null;
+        ResultSet rsLoadPage = null;
+
+        try{
+            stLoadPage = conn.prepareStatement("SELECT * FROM pages WHERE id = ?");
+            stLoadPage.setLong(1, pageId);
+
+            rsLoadPage = stLoadPage.executeQuery();
+            if(rsLoadPage.next()) {
+                Page page = new Page(rsLoadPage.getInt("id"), rsLoadPage.getString("type"));
+
+                page.setAttributes(jsonToMap(rsLoadPage.getString("attributes")));
+                return page;
+            } else {
+                return null;
+            }
+        } finally {
+            DbUtils.close(stLoadPage);
+            DbUtils.close(rsLoadPage);
         }
     }
 
@@ -141,23 +179,33 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
             throw new IllegalArgumentException();
         }
 
-        PreparedStatement stFindByType = conn.prepareStatement("SELECT * FROM pages WHERE type = ?");
-        stFindByType.setString(1,type);
+        PreparedStatement stFindByType = null;
+        ResultSet rs = null;
 
-        ResultSet rs = stFindByType.executeQuery();
-        List<Page> pages = new ArrayList<>();
+        try{
+            stFindByType = conn.prepareStatement("SELECT * FROM pages WHERE type = ?");
+            stFindByType.setString(1,type);
 
-        while(rs.next()){
-            long id = rs.getInt("ID");
-            String resultType = rs.getString("type");
-            String attributesJSON = rs.getString("attributes");
+            rs = stFindByType.executeQuery();
+            List<Page> pages = new ArrayList<>();
 
-            Page page = new Page(id, resultType);
-            page.setAttributes(jsonToMap(attributesJSON));
-            pages.add(page);
+            while(rs.next()){
+                long id = rs.getInt("ID");
+                String resultType = rs.getString("type");
+                String attributesJSON = rs.getString("attributes");
+
+                Page page = new Page(id, resultType);
+                page.setAttributes(jsonToMap(attributesJSON));
+                pages.add(page);
+            }
+
+            return pages;
+        } finally {
+            DbUtils.close(stFindByType);
+            DbUtils.close(rs);
         }
 
-        return pages;
+
     }
 
     /**
@@ -177,22 +225,32 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
             throw new IllegalArgumentException();
         }
 
-        // Oracle String literals are stupid -> sqlInjection might be possible here...
-        // see https://stackoverflow.com/questions/56948001/how-to-use-oracles-json-value-function-with-a-preparedstatement
-        String queryString = "SELECT * FROM pages WHERE json_exists(attributes, '$[*]?(@.name == \"" + attributeName + "\")')";
-        
-        PreparedStatement stFindByAttribute = conn.prepareStatement(queryString);
+        PreparedStatement stFindByAttribute = null;
+        ResultSet rsFindPagesByAttribute = null;
 
-        ResultSet rsFindPagesByAttribute = stFindByAttribute.executeQuery();
-        List<Page> pages = new ArrayList<>();
-        
-        while(rsFindPagesByAttribute.next()) {
-            Page page = new Page(rsFindPagesByAttribute.getInt(1), rsFindPagesByAttribute.getString(2));
-            page.setAttributes(jsonToMap(rsFindPagesByAttribute.getString(3)));
-            pages.add(page);
+        try {
+            // Oracle String literals are stupid -> sqlInjection might be possible here...
+            // see https://stackoverflow.com/questions/56948001/how-to-use-oracles-json-value-function-with-a-preparedstatement
+            String queryString = "SELECT * FROM pages WHERE json_exists(attributes, '$[*]?(@.name == \"" + attributeName + "\")')";
+
+            stFindByAttribute = conn.prepareStatement(queryString);
+
+            rsFindPagesByAttribute = stFindByAttribute.executeQuery();
+            List<Page> pages = new ArrayList<>();
+
+            while(rsFindPagesByAttribute.next()) {
+                Page page = new Page(rsFindPagesByAttribute.getInt(1), rsFindPagesByAttribute.getString(2));
+                page.setAttributes(jsonToMap(rsFindPagesByAttribute.getString(3)));
+                pages.add(page);
+            }
+
+            return pages;
+        } finally {
+            DbUtils.close(stFindByAttribute);
+            DbUtils.close(rsFindPagesByAttribute);
         }
-        
-        return pages;
+
+
     }
 
     /**
@@ -213,23 +271,31 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
             throw new IllegalArgumentException();
         }
 
-        // Oracle String literals are stupid -> sqlInjection might be possible here...
-        // see https://stackoverflow.com/questions/56948001/how-to-use-oracles-json-value-function-with-a-preparedstatement
-        String queryString = "SELECT * FROM pages WHERE json_exists(attributes, '$[*]?(@.name == \""+ attributeName + "\" && @.values[*]."+ value.getType().toString()+" == \""+ value.getValue().toString() +"\")')";
-        //Might need to look into performance of json_exists with filter vs json_value... (plus indezes for those)
+        PreparedStatement stFindByAttributeValue = null;
+        ResultSet rsFindPagesByAttributeValue = null;
 
-        PreparedStatement stFindByAttributeValue = conn.prepareStatement(queryString);
-        
-        ResultSet rsFindPagesByAttributeValue = stFindByAttributeValue.executeQuery();
-        List<Page> pages = new ArrayList<>();
-        
-        while(rsFindPagesByAttributeValue.next()) {
-            Page page = new Page(rsFindPagesByAttributeValue.getInt(1), rsFindPagesByAttributeValue.getString(2));
-            page.setAttributes(jsonToMap(rsFindPagesByAttributeValue.getString(3)));
-            pages.add(page);
+        try {
+            // Oracle String literals are stupid -> sqlInjection might be possible here...
+            // see https://stackoverflow.com/questions/56948001/how-to-use-oracles-json-value-function-with-a-preparedstatement
+            String queryString = "SELECT * FROM pages WHERE json_exists(attributes, '$[*]?(@.name == \""+ attributeName + "\" && @.values[*]."+ value.getType().toString()+" == \""+ value.getValue().toString() +"\")')";
+            //Might need to look into performance of json_exists with filter vs json_value... (plus indezes for those)
+
+            stFindByAttributeValue = conn.prepareStatement(queryString);
+
+            rsFindPagesByAttributeValue = stFindByAttributeValue.executeQuery();
+            List<Page> pages = new ArrayList<>();
+
+            while(rsFindPagesByAttributeValue.next()) {
+                Page page = new Page(rsFindPagesByAttributeValue.getInt(1), rsFindPagesByAttributeValue.getString(2));
+                page.setAttributes(jsonToMap(rsFindPagesByAttributeValue.getString(3)));
+                pages.add(page);
+            }
+
+            return pages;
+        } finally {
+            DbUtils.close(stFindByAttributeValue);
+            DbUtils.close(rsFindPagesByAttributeValue);
         }
-        
-        return pages;
     }
 
     private String mapToJSON(Map<String, Attribute> attributes) {

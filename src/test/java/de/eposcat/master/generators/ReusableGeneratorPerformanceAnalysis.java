@@ -18,18 +18,23 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.time.Instant;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * The databases of this class get filled with data when first run and then will be reused for the tests
- * To generate new start data, delete the running containers (it seems like ou cannot name the containers to your liking)
+ * To generate new start data, delete the running containers (it seems like you cannot name the containers with testcontainers, so look for containers based on the images)
  *
  * !!!!!!!
  * Currently there can be only one running oracle container, so you might need to stop the one from the integration tests.
@@ -45,16 +50,26 @@ public class ReusableGeneratorPerformanceAnalysis {
     static final GenericContainer oracle;
     static final GenericContainer postgres;
 
-    static final int numberOfStartAttributes = 5;
-    static final int meanNumberOfAttributes = 5;
-    static final int maxNumberOfAttributes = 5;
+    static int numberOfStartAttributes = 5;
+    static int meanNumberOfAttributes = 5;
+    static int maxNumberOfAttributes = 5;
 
-    static final int numberOfStartEntities = 10;
+    static int numberOfStartEntities = 10;
+
+    static String setupName = "";
 
     static final int rngSeed = 1;
+    static Random r = new Random(rngSeed);
 
-    static final IDatabaseAdapter oracleDBAdapter;
-    static final IDatabaseAdapter postgresDBAdapter;
+    static List<PerformanceTestAttribute> queryAttributes;
+
+    static final IDatabaseAdapter oracleJsonDBAdapter;
+    static final IDatabaseAdapter postgresJsonDBAdapter;
+
+    static List<Long> oracleIds = null;
+    static List<Long> postgresIds = null;
+
+    static Map<String, IDatabaseAdapter> adapters = new HashMap<>();
 
     private static final Logger log = LoggerFactory.getLogger(ReusableGeneratorPerformanceAnalysis.class);
 
@@ -78,56 +93,84 @@ public class ReusableGeneratorPerformanceAnalysis {
         postgres.start();
 
         CustomOracleConnectionManager oracleConnectionManager = new CustomOracleConnectionManager(RelationalApproach.JSON, "localhost", oracle.getMappedPort(1521), "json", "json");
-        oracleDBAdapter = new JSON_Oracle_DatabaseAdapter(oracleConnectionManager);
+        oracleJsonDBAdapter = new JSON_Oracle_DatabaseAdapter(oracleConnectionManager);
+        adapters.put("oracleJson", oracleJsonDBAdapter);
 
         PostgresConnectionManager postgresConnectionManager = new PostgresConnectionManager(RelationalApproach.JSON, "localhost", postgres.getMappedPort(5432), "postgres", "admin");
-        postgresDBAdapter = new JSON_Postgres_DatabaseAdapter(postgresConnectionManager);
-
+        postgresJsonDBAdapter = new JSON_Postgres_DatabaseAdapter(postgresConnectionManager);
+        adapters.put("postgresJson", postgresJsonDBAdapter);
 
         Random r = new Random(rngSeed);
-        List<PerformanceTestAttribute> queryAttributes = new ArrayList<>(Arrays.asList(
-                new PerformanceTestAttribute("fiftyFifty", 50d, () -> String.valueOf(r.nextBoolean())),
-                new PerformanceTestAttribute("tenPercent", 10d, () -> String.valueOf(r.nextBoolean()))
-        ));
 
         try {
-            log.info("Started Containers, generating initial data if no data exists yet");
-            boolean oracleIsEmpty = oracleDBAdapter.findPagesByAttributeName(queryAttributes.get(0).getAttributeName()).size() == 0;
-            boolean postgresIsEmpty = postgresDBAdapter.findPagesByAttributeName(queryAttributes.get(0).getAttributeName()).size() == 0;
+            //Use a certain setup
+            setupBestCaseScenario();
 
-            if(oracleIsEmpty || postgresIsEmpty){
+            log.info("Started Containers, generating initial data if no data exists yet");
+            Map<String, Boolean> isEmptyDB = new HashMap<>();
+
+            for(String key : adapters.keySet()){
+                isEmptyDB.put(key, adapters.get(key).findPagesByAttributeName(queryAttributes.get(0).getAttributeName()).size() == 0);
+            }
+
+            boolean anyAdapterEmpty = isEmptyDB.values().contains(Boolean.valueOf(true));
+
+            if(anyAdapterEmpty){
                 StartDataGenerator startDataGenerator = new StartDataGenerator(rngSeed);
 
 
                 FillerAttributesStats filler = new FillerAttributesStats(numberOfStartAttributes, meanNumberOfAttributes, maxNumberOfAttributes);
                 StartData startData = startDataGenerator.generateStartData(numberOfStartEntities, filler, queryAttributes);
 
-                for(Page page : startData.pages){
-                    if(oracleIsEmpty){
-                        oracleDBAdapter.createPageWithAttributes(page.getTypeName(), page.getAttributes());
-                    }
+                oracleIds = new ArrayList<>(startData.pages.size());
+                postgresIds = new ArrayList<>(startData.pages.size());
 
-                    if(postgresIsEmpty){
-                        postgresDBAdapter.createPageWithAttributes(page.getTypeName(), page.getAttributes());
+
+                for(Page page : startData.pages){
+                    for(String key : adapters.keySet()){
+                        if(isEmptyDB.get(key)){
+                            adapters.get(key).createPageWithAttributes(page.getTypeName(), page.getAttributes());
+                            //save Ids?
+                        }
                     }
                 }
 
-                log.info("Added start data to databases oracle: " +oracleIsEmpty+" and/or postgres: " +postgresIsEmpty);
+
+
+                log.info("Added start data to databases");
+                //TODO add which adapters
+
             } else {
                 log.info("Initial data is already present in both containers, skipping creating data step..");
             }
+
+//            if(oracleIsEmpty){
+//                printIdsToFile(oracleIds, "oracle");
+//            } else {
+//                oracleIds = loadIdsFromFile(Paths.get("oracle"));
+//            }
+//
+//            if(postgresIsEmpty){
+//                printIdsToFile(postgresIds, "postgres");
+//            } else {
+//                postgresIds = loadIdsFromFile(Paths.get("postgres"));
+//            }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
+
+
+
     @Test
     public void queries(){
         try {
-            List<Page> pages = oracleDBAdapter.findPagesByAttributeName("fiftyFifty");
+            List<Page> pages = oracleJsonDBAdapter.findPagesByAttributeName("fiftyFifty");
             log.info("CountO: {}", pages.size());
 
-            pages = postgresDBAdapter.findPagesByAttributeName("fiftyFifty");
+            pages = postgresJsonDBAdapter.findPagesByAttributeName("fiftyFifty");
             log.info("CountP: {}", pages.size());
 
         } catch (SQLException throwables) {
@@ -136,4 +179,135 @@ public class ReusableGeneratorPerformanceAnalysis {
         }
 
     }
+
+    @Test
+    public void simplePerformanceTest(){
+        log.info("Started SimplePerformanceTest, Setup: {}", setupName);
+        Instant startPt = Instant.now();
+
+        for(String key: adapters.keySet()){
+            testAttributeName(adapters.get(key), key);
+        }
+
+        Instant endPt = Instant.now();
+        log.info("Finished SimplePerformanceTest, duration: {}", Duration.between(startPt,endPt));
+    }
+
+    public void testAttributeName(IDatabaseAdapter dbAdapter, String dbName){
+        try {
+            log.info("Starting with Attributename lookup, DB: {}",  dbName);
+            log.info("Started Checking for name, 20%");
+            Instant startN2 = Instant.now();
+
+            dbAdapter.findPagesByAttributeName("twentyPercent");
+
+            Instant endN2 = Instant.now();
+            log.info("Finished Checking for name, 20%, duration: {}", Duration.between(startN2,endN2));
+
+            log.info("Started checking for name, 50%");
+            Instant startN5 = Instant.now();
+
+            dbAdapter.findPagesByAttributeName("fiftyPercent");
+
+            Instant endN5 = Instant.now();
+            log.info("Finished checking for name, 50%, duration: {}", Duration.between(startN5,endN5));
+
+            log.info("Started checking for name, 70%");
+            Instant startN7 = Instant.now();
+
+            dbAdapter.findPagesByAttributeName("seventyPercent");
+
+            Instant endN7 = Instant.now();
+            log.info("Finished checking for name, 70%, duration: {}", Duration.between(startN7,endN7));
+        } catch (SQLException throwables) {
+            log.info("XXXXXXXXXXXXXXXXXXXXXXXXXX");
+            log.info("Encountered an error while looking for attribute by name!!!!");
+            log.info("XXXXXXXXXXXXXXXXXXXXXXXXXX");
+            fail();
+            throwables.printStackTrace();
+        }
+
+    }
+
+    // xxxxxxxxxxxxxxxxxxxxxxxxx
+    // methods to change arguments after startup, not used yet
+
+    private static void printIdsToFile(List<Long> ids, String filename) {
+        try {
+            FileWriter writer = new FileWriter(Paths.get(filename).toFile(), false);
+            ids.forEach(id -> {
+                try {
+                    writer.write(id + System.lineSeparator());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static List<Long> loadIdsFromFile(Path path) {
+        try {
+            return Files.readAllLines(path, Charset.defaultCharset()).stream().map(Long::valueOf).collect(Collectors.toList());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void applyToAllPages(IDatabaseAdapter dbAdapter, List<Long> ids){
+        StartDataGenerator generator = new StartDataGenerator(rngSeed);
+
+        for(Long id : ids){
+            try {
+                dbAdapter.loadPage(id);
+
+
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+        }
+    }
+
+    public void overrideQueryAttributes(){
+        StartDataGenerator generator = new StartDataGenerator(rngSeed);
+    }
+
+    static public void setupBestCaseScenario(){
+        setupName = "Best Case Scenario";
+
+        numberOfStartEntities = 100000;
+
+        maxNumberOfAttributes = 200;
+        meanNumberOfAttributes = 100;
+        numberOfStartAttributes = 1000;
+
+        queryAttributes = new ArrayList<>(Arrays.asList(
+                new PerformanceTestAttribute("twentyPercent", 20d, () -> String.valueOf(r.nextBoolean())),
+                new PerformanceTestAttribute("fiftyPercent", 50d, () -> String.valueOf(r.nextBoolean())),
+                new PerformanceTestAttribute("seventyPercent", 70d, () -> String.valueOf(r.nextBoolean()))
+        ));
+    }
+
+    static public void setupCornerCaseScenario(){
+        numberOfStartEntities = 100000;
+
+        maxNumberOfAttributes = 200;
+        meanNumberOfAttributes = 100;
+        numberOfStartAttributes = 1000;
+
+        queryAttributes = new ArrayList<>(Arrays.asList(
+                new PerformanceTestAttribute("twentyPercent", 20d, () -> generateBigString(1000)),
+                new PerformanceTestAttribute("fiftyPercent", 50d, () -> generateBigString(1000)),
+                new PerformanceTestAttribute("seventyPercent", 70d, () -> generateBigString(1000))
+        ));
+    }
+
+    static public String generateBigString(int sizeInKB){
+        byte[] bytes = new byte[sizeInKB * 1000];
+        r.nextBytes(bytes);
+        return String.valueOf(bytes);
+    }
+
 }

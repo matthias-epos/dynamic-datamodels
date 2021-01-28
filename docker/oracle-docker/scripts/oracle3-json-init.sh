@@ -8,7 +8,8 @@ CREATE TABLE pages (
     type varchar2(255),
     -- Oracle Docs use clob in examples in version 12 and varchar2(23767) in version 18 examples
     -- Not sure why exactly 23767 bytes used, doesnt work in default config of database attributes varchar2(4000),
-    attributes varchar2(4000),
+    -- varchar was to small, now using clob
+    attributes clob,
     CONSTRAINT "PAGES_ID_PK" PRIMARY KEY ("ID"),
     CONSTRAINT "ENSURE_JSON_ATTRIBUTE" CHECK (attributes IS JSON)
 );
