@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class Page {
-    private long id;
+    private final long id;
     //TODO make typeName mandatory
     private String typeName;
     private Map<String, Attribute> attributes;
@@ -22,7 +22,7 @@ public class Page {
     }
     
     public Page(long id, String typeName) {
-        this();
+        this.attributes = new HashMap<>();
         this.id = id;
         this.typeName = typeName;
     }
