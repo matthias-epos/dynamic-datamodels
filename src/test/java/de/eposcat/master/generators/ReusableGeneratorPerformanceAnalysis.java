@@ -9,7 +9,11 @@ import de.eposcat.master.connection.RelationalApproach;
 import de.eposcat.master.generators.data.FillerAttributesStats;
 import de.eposcat.master.generators.data.PerformanceTestAttribute;
 import de.eposcat.master.generators.data.StartData;
+import de.eposcat.master.model.Attribute;
+import de.eposcat.master.model.AttributeBuilder;
+import de.eposcat.master.model.AttributeType;
 import de.eposcat.master.model.Page;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * To generate new start data, delete the running containers (it seems like you cannot name the containers with testcontainers, so look for containers based on the images)
  *
  * !!!!!!!
- * Currently there can be only one running oracle container, so you might need to stop the one from the integration tests.
+ * Currently there can be only one running oracle container, so you might need to stop the one from the integration tests or the other Test cases
  * There is probably an issue with the ports and this behavior might be fixed in a future update.
  * It is possible though to pause and resume the containers manually and save yourself some time!
  * !!!!!!!
@@ -45,6 +49,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * This class should not be run as part of the Unit and Integration Tests
  */
 @Testcontainers
+@Disabled
 public class ReusableGeneratorPerformanceAnalysis {
 
     static final GenericContainer oracle;
@@ -104,8 +109,8 @@ public class ReusableGeneratorPerformanceAnalysis {
 
         try {
             //Use a certain setup
-            setupBestCaseScenario();
-
+//            setupBestCaseScenario();
+            setupCornerCaseScenario();
             log.info("Started Containers, generating initial data if no data exists yet");
             Map<String, Boolean> isEmptyDB = new HashMap<>();
 
@@ -187,6 +192,7 @@ public class ReusableGeneratorPerformanceAnalysis {
 
         for(String key: adapters.keySet()){
             testAttributeName(adapters.get(key), key);
+            testAttributeValue(adapters.get(key), key, new AttributeBuilder().setValue("true").setType(AttributeType.String).createAttribute());
         }
 
         Instant endPt = Instant.now();
@@ -227,6 +233,44 @@ public class ReusableGeneratorPerformanceAnalysis {
             throwables.printStackTrace();
         }
 
+    }
+
+    public void testAttributeValue(IDatabaseAdapter dbAdapter, String dbName, Attribute value){
+        log.info("Starting Attribute Value Lookup, DB: {}", dbName);
+
+
+        try {
+            log.info("Started Checking for value, 10%");
+            Instant startN2 = Instant.now();
+
+            dbAdapter.findPagesByAttributeValue("twentyPercent", value);
+
+            Instant endN2 = Instant.now();
+            log.info("Finished Checking for value, 10%, duration: {}", Duration.between(startN2,endN2));
+
+            log.info("Started checking for value, 25%");
+            Instant startN5 = Instant.now();
+
+            dbAdapter.findPagesByAttributeValue("fiftyPercent", value);
+
+            Instant endN5 = Instant.now();
+            log.info("Finished checking for value, 25%, duration: {}", Duration.between(startN5,endN5));
+
+            log.info("Started checking for value, 35%");
+            Instant startN7 = Instant.now();
+
+            dbAdapter.findPagesByAttributeValue("seventyPercent", value);
+
+            Instant endN7 = Instant.now();
+            log.info("Finished checking for value, 35%, duration: {}", Duration.between(startN7,endN7));
+        } catch (SQLException throwables) {
+            log.info("XXXXXXXXXXXXXXXXXXXXXXXXXX");
+            log.info("Encountered an error while looking for attribute by value!!!!");
+            log.info("XXXXXXXXXXXXXXXXXXXXXXXXXX");
+            log.error(throwables.getMessage());
+            throwables.printStackTrace();
+            fail();
+        }
     }
 
     // xxxxxxxxxxxxxxxxxxxxxxxxx
