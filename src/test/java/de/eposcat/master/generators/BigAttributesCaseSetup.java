@@ -67,9 +67,7 @@ public class BigAttributesCaseSetup extends PerformanceTestContainerStartup{
     }
 
     @Test
-    public void staticLul(){
-        assertThat(numberOfStartAttributes, Is.is(10));
-
+    public void changeBigAttributeTest(){
         try {
             log.info("Started finding pages with big attribute");
             Instant startq = Instant.now();

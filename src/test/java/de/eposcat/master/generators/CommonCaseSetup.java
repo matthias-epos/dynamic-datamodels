@@ -61,6 +61,20 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup{
         setupData();
     }
 
+    @Test
+    public void simplePerformanceTest(){
+        log.info("Started SimplePerformanceTest, Setup: {}", setupName);
+        Instant startPt = Instant.now();
+
+        for(String key: adapters.keySet()){
+            testAttributeName(adapters.get(key), key);
+            testAttributeValue(adapters.get(key), key, new AttributeBuilder().setValue("true").setType(AttributeType.String).createAttribute());
+        }
+
+        Instant endPt = Instant.now();
+        log.info("Finished SimplePerformanceTest, duration: {}", Duration.between(startPt,endPt));
+    }
+
 
     public void testAttributeName(IDatabaseAdapter dbAdapter, String dbName){
         try {
@@ -96,20 +110,6 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup{
             throwables.printStackTrace();
         }
 
-    }
-
-    @Test
-    public void simplePerformanceTest(){
-        log.info("Started SimplePerformanceTest, Setup: {}", setupName);
-        Instant startPt = Instant.now();
-
-        for(String key: adapters.keySet()){
-            testAttributeName(adapters.get(key), key);
-            testAttributeValue(adapters.get(key), key, new AttributeBuilder().setValue("true").setType(AttributeType.String).createAttribute());
-        }
-
-        Instant endPt = Instant.now();
-        log.info("Finished SimplePerformanceTest, duration: {}", Duration.between(startPt,endPt));
     }
 
     public void testAttributeValue(IDatabaseAdapter dbAdapter, String dbName, Attribute value){
