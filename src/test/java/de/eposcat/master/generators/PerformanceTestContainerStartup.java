@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +46,9 @@ public abstract class PerformanceTestContainerStartup {
     static Map<String, IDatabaseAdapter> adapters = new HashMap<>();
 
     static String setupName = "Override me!!";
+
+    static String[] entityNames;
+    static String[] attributeNames;
 
     private static final Logger log = LoggerFactory.getLogger(PerformanceTestContainerStartup.class);
 
@@ -90,6 +94,9 @@ public abstract class PerformanceTestContainerStartup {
                     }
                 }
 
+                entityNames = startData.entityNames;
+                attributeNames = startData.attributeNames;
+
                 log.info("Added start data to databases");
                 //TODO add which adapters
             } else {
@@ -98,5 +105,20 @@ public abstract class PerformanceTestContainerStartup {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void setupChanges(int numberOfChanges){
+        ChangesGenerator generator = new ChangesGenerator(entityNames, attributeNames, getChangesFileName(), 1);
+
+        try {
+            generator.generateChangeSets(numberOfChanges);
+        } catch (IOException ex){
+            log.error("Failed to create change set.");
+            log.error(ex.getMessage());
+        }
+    }
+
+    public static String getChangesFileName(){
+        return setupName + "changeSet.txt";
     }
 }

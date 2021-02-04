@@ -15,6 +15,9 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Runs a change file, committing all changes with the given database adapter.
+ */
 public class ChangeRunner {
     IDatabaseAdapter adapter;
     Gson gson;

@@ -10,6 +10,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
@@ -35,6 +38,8 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup{
 
     private static final Logger log = LoggerFactory.getLogger(CommonCaseSetup.class);
 
+    static int numberOfChanges = 5000;
+
     static {
         setupContainers("commonCase");
         startup();
@@ -59,6 +64,12 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup{
     static void startup(){
         setupDatabaseValuesParameters();
         setupData();
+
+        //Currently we only remember entityNames and attributeNames when generating the startData
+        //To be more flexible with creating changeSets we might have to persist them somewhere (db or text file?)
+        if(!Files.exists(Paths.get(getChangesFileName())) && entityNames != null && attributeNames != null){
+            setupChanges(numberOfChanges);
+        }
     }
 
     @Test
@@ -69,10 +80,41 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup{
         for(String key: adapters.keySet()){
             testAttributeName(adapters.get(key), key);
             testAttributeValue(adapters.get(key), key, new AttributeBuilder().setValue("true").setType(AttributeType.String).createAttribute());
+            testChanges(adapters.get(key), key);
+
         }
 
         Instant endPt = Instant.now();
         log.info("Finished SimplePerformanceTest, duration: {}", Duration.between(startPt,endPt));
+    }
+
+    private void testChanges(IDatabaseAdapter adapter, String dbName) {
+        //Changes only affect filler attributes, the tests for our query attributes should not be affected?
+        //We are adding and removing attributes, so it might have some effect...
+        log.info("Testing running multiple attribute changes, database: {}", dbName);
+        ChangeRunner runner = new ChangeRunner(adapter);
+
+        try {
+            log.info("Started Running changes, count: {}", numberOfChanges);
+            Instant start = Instant.now();
+
+            runner.applyChanges(Paths.get(getChangesFileName()));
+
+            Instant end = Instant.now();
+            Duration duration = Duration.between(start,end);
+            log.info("Finished Running changes, duration: {}", duration);
+            log.info("Average time per transaction: {}ms", "" + duration.toMillis()/numberOfChanges);
+        } catch (IOException e) {
+            log.error("Failed to read changes file");
+            log.error(e.getMessage());
+            e.printStackTrace();
+            fail();
+        } catch (SQLException throwables) {
+            log.error("Failed to execute changes");
+            log.error(throwables.getMessage());
+            throwables.printStackTrace();
+            fail();
+        }
     }
 
 
