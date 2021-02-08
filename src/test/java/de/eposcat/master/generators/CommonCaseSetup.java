@@ -5,19 +5,18 @@ import de.eposcat.master.generators.data.PerformanceTestAttribute;
 import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.AttributeBuilder;
 import de.eposcat.master.model.AttributeType;
+import de.eposcat.master.model.Page;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -89,32 +88,72 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup{
     }
 
     private void testChanges(IDatabaseAdapter adapter, String dbName) {
-        //Changes only affect filler attributes, the tests for our query attributes should not be affected?
-        //We are adding and removing attributes, so it might have some effect...
-        log.info("Testing running multiple attribute changes, database: {}", dbName);
-        ChangeRunner runner = new ChangeRunner(adapter);
-
+        //Here we test the performance of all parts off the entity lifecycle
+        // Create -> Add attributes -> Change single attribute -> Delete page
+        log.info("Testing running attribute changes, database: {}", dbName);
         try {
-            log.info("Started Running changes, count: {}", numberOfChanges);
+            log.info("Started Creating page which will be changed", numberOfChanges);
             Instant start = Instant.now();
 
-            runner.applyChanges(Paths.get(getChangesFileName()));
+            Page page = adapter.createPage("attributeChangeTestPage");
 
             Instant end = Instant.now();
             Duration duration = Duration.between(start,end);
-            log.info("Finished Running changes, duration: {}", duration);
-            log.info("Average time per transaction: {}ms", "" + duration.toMillis()/numberOfChanges);
-        } catch (IOException e) {
-            log.error("Failed to read changes file");
-            log.error(e.getMessage());
-            e.printStackTrace();
-            fail();
+            log.info("Finished Creating page which will be changed, duration: {}", duration);
+
+            Map<String, Attribute> newAttributes = new HashMap<>();
+
+            for (int i = 0; i<meanNumberOfAttributes; i++){
+                newAttributes.put(randomAttributeName(), randomAttributeValue());
+            }
+
+            newAttributes.put("changeAttribute", randomAttributeValue());
+            page.setAttributes(newAttributes);
+
+            log.info("Started saving {} entity attributes", meanNumberOfAttributes + 1);
+            Instant starts = Instant.now();
+
+            adapter.updatePage(page);
+
+            Instant ends = Instant.now();
+            log.info("Finished saving {} entity attributes, duration: {}", Duration.between(starts,ends));
+
+            page.addAttribute("changeAttribute", randomAttributeValue());
+
+            log.info("Started changing single attribute value");
+            Instant startC1 = Instant.now();
+
+            adapter.updatePage(page);
+
+            Instant endC1 = Instant.now();
+            log.info("Finished changing single attribute value, duration: {}", Duration.between(startC1,endC1));
+
+            log.info("Started deleting page");
+            Instant startD = Instant.now();
+
+            adapter.deletePage(page.getId());
+
+            Instant endD = Instant.now();
+            log.info("Finished deleting page, duration: {}", Duration.between(startD,endD));
+
         } catch (SQLException throwables) {
             log.error("Failed to execute changes");
             log.error(throwables.getMessage());
             throwables.printStackTrace();
             fail();
         }
+    }
+
+    private Attribute randomAttributeValue() {
+        Random r = new Random();
+        return new AttributeBuilder().setType(AttributeType.String).setValue(r.nextInt(400)).createAttribute();
+    }
+
+    private String randomAttributeName() {
+        Random r = new Random();
+        StartDataGenerator stg = new StartDataGenerator(r.nextInt());
+
+        return  stg.getRandomEntityName();
     }
 
 
