@@ -1,5 +1,6 @@
 package de.eposcat.master.generators;
 
+import de.eposcat.master.approachImpl.EAV_DatabaseAdapter;
 import de.eposcat.master.approachImpl.IDatabaseAdapter;
 import de.eposcat.master.approachImpl.JSON_Oracle_DatabaseAdapter;
 import de.eposcat.master.approachImpl.JSON_Postgres_DatabaseAdapter;
@@ -43,6 +44,9 @@ public abstract class PerformanceTestContainerStartup {
     static IDatabaseAdapter oracleJsonDBAdapter;
     static IDatabaseAdapter postgresJsonDBAdapter;
 
+    static IDatabaseAdapter oracleEavDBAdapter;
+    static IDatabaseAdapter postgresEavDBAdapter;
+
     static Map<String, IDatabaseAdapter> adapters = new HashMap<>();
 
     static String setupName = "Override me!!";
@@ -61,13 +65,23 @@ public abstract class PerformanceTestContainerStartup {
     }
 
     public static void setupData(){
-        CustomOracleConnectionManager oracleConnectionManager = new CustomOracleConnectionManager(RelationalApproach.JSON, "localhost", oracle.getMappedPort(1521), "json", "json");
-        oracleJsonDBAdapter = new JSON_Oracle_DatabaseAdapter(oracleConnectionManager);
+        CustomOracleConnectionManager oracleJsonConnectionManager = new CustomOracleConnectionManager(RelationalApproach.JSON, "localhost", oracle.getMappedPort(1521), "json", "json");
+        oracleJsonDBAdapter = new JSON_Oracle_DatabaseAdapter(oracleJsonConnectionManager);
         adapters.put("oracleJson", oracleJsonDBAdapter);
 
-        PostgresConnectionManager postgresConnectionManager = new PostgresConnectionManager(RelationalApproach.JSON, "localhost", postgres.getMappedPort(5432), "postgres", "admin");
-        postgresJsonDBAdapter = new JSON_Postgres_DatabaseAdapter(postgresConnectionManager);
+        CustomOracleConnectionManager oracleEavConnectionManager = new CustomOracleConnectionManager(RelationalApproach.EAV, "localhost", oracle.getMappedPort(1521), "eav", "eav");
+        oracleEavDBAdapter = new EAV_DatabaseAdapter(oracleEavConnectionManager);
+        adapters.put("oracleEav", oracleEavDBAdapter);
+
+        PostgresConnectionManager postgresJsonConnectionManager = new PostgresConnectionManager(RelationalApproach.JSON, "localhost", postgres.getMappedPort(5432), "postgres", "admin");
+        postgresJsonDBAdapter = new JSON_Postgres_DatabaseAdapter(postgresJsonConnectionManager);
         adapters.put("postgresJson", postgresJsonDBAdapter);
+
+        PostgresConnectionManager postgresEavConnectionManager = new PostgresConnectionManager(RelationalApproach.EAV, "localhost", postgres.getMappedPort(5432), "postgres", "admin");
+        postgresEavDBAdapter = new EAV_DatabaseAdapter(postgresEavConnectionManager);
+        adapters.put("postgresEav", postgresEavDBAdapter);
+
+
 
         try {
             log.info("Started Containers, generating initial data if no data exists yet");
