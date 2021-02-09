@@ -87,12 +87,11 @@ public class GeneratorsIT {
             int meanNumberOfAttributes = 50;
             int maxNumberOfAttributes = 500;
 
-            //TODO Put arguments into a builder?
-            FillerAttributesStats filler = new FillerAttributesStats(numberOfStartAttributes, meanNumberOfAttributes, maxNumberOfAttributes);
-
             int numberOfStartEntities = 1000;
 
-            StartData startData = startDataGenerator.generateData(numberOfStartEntities, filler, getExampleAtt(new Random(1)));
+            //TODO Put arguments into a builder?
+            FillerAttributesStats filler = new FillerAttributesStats(numberOfStartAttributes, meanNumberOfAttributes, maxNumberOfAttributes);
+            StartData startData = startDataGenerator.generateStartData(numberOfStartEntities, filler, getExampleAtt(new Random(1)));
 
             for (Page page : startData.pages) {
                 dbAdapter.createPageWithAttributes(page.getTypeName(), page.getAttributes());

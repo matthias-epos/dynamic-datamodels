@@ -17,10 +17,15 @@ INSERT INTO entities (typename) VALUES ( 'single' ),
                             ('ten'),
                             ('rand'),
                             ('rand'),
-                            ('rand');
+                            ('rand'),
+                            ('complex');
 
 INSERT INTO attributes (datatype, name ) VALUES ( 'String', 'singleAttribute' ),
-                                                ( 'String', 'tenAttribute' );
+                                                ( 'String', 'tenAttribute' ),
+                                                ('String' , 'moreAttribute1'),
+                                                ('String' , 'moreAttribute2'),
+                                                ('String' , 'moreAttribute3'),
+                                                ('String' , 'moreAttribute4');
 
 INSERT INTO eav_values (ent_id, att_id, value) VALUES ( 1,1, 'test' ),
                                                       ( 2,2, 'firstHalf' ),
@@ -32,6 +37,10 @@ INSERT INTO eav_values (ent_id, att_id, value) VALUES ( 1,1, 'test' ),
                                                       ( 8,2, 'secondHalf' ),
                                                       ( 9,2, 'secondHalf' ),
                                                       ( 10,2, 'secondHalf' ),
-                                                      ( 11,2, 'secondHalf' );
+                                                      ( 11,2, 'secondHalf' ),
+                                                      ( 15,3, '1' ),
+                                                      ( 15,4, '2' ),
+                                                      ( 15,5, '3' ),
+                                                      ( 15,6, '4' );
 
 EOSQL

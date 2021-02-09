@@ -20,6 +20,7 @@ import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.Page;
 import de.eposcat.master.serializer.AttributesDeserializer;
 import de.eposcat.master.serializer.AttributesSerializer;
+import org.apache.commons.dbutils.DbUtils;
 
 
 public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
@@ -48,23 +49,33 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
             throw new IllegalArgumentException();
         }
 
-        PreparedStatement stCreatePage = conn.prepareStatement("INSERT INTO pages(type, attributes) VALUES (?,?::json)",
-                Statement.RETURN_GENERATED_KEYS);
-        stCreatePage.setString(1, typename);
-        stCreatePage.setObject(2, mapToJSON(attributes));
+        PreparedStatement stCreatePage = null;
+        ResultSet key = null;
 
-        int affectedRows = stCreatePage.executeUpdate();
+        try {
+            stCreatePage = conn.prepareStatement("INSERT INTO pages(type, attributes) VALUES (?,?::json)",
+                    Statement.RETURN_GENERATED_KEYS);
+            stCreatePage.setString(1, typename);
+            stCreatePage.setObject(2, mapToJSON(attributes));
 
-        if (affectedRows > 0) {
-            ResultSet key = stCreatePage.getGeneratedKeys();
-            key.next();
+            int affectedRows = stCreatePage.executeUpdate();
 
-            Page pageWithId = new Page(key.getInt(1), typename);
-            pageWithId.setAttributes(attributes);
-            return pageWithId;
+            if (affectedRows > 0) {
+                key = stCreatePage.getGeneratedKeys();
+                key.next();
+
+                Page pageWithId = new Page(key.getInt(1), typename);
+                pageWithId.setAttributes(attributes);
+                return pageWithId;
+            }
+
+            return null;
+        } finally {
+            DbUtils.close(stCreatePage);
+            DbUtils.close(key);
         }
 
-        return null;
+
     }
 
     @Override
@@ -81,12 +92,18 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
             return false;
         }
 
-        PreparedStatement st = conn.prepareStatement("DELETE FROM pages WHERE ID = ?");
-        st.setLong(1, page.getId());
+        PreparedStatement st = null;
 
-        int affectedRows = st.executeUpdate();
+        try {
+            st = conn.prepareStatement("DELETE FROM pages WHERE ID = ?");
+            st.setLong(1, page.getId());
 
-        return (affectedRows > 0);
+            int affectedRows = st.executeUpdate();
+
+            return (affectedRows > 0);
+        } finally {
+            DbUtils.close(st);
+        }
     }
 
     @Override
@@ -95,34 +112,47 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
             throw new IllegalArgumentException("page must not be null");
         }
 
-        PreparedStatement stUpdatePage = conn.prepareStatement("UPDATE pages SET type = ?, attributes = ?::json WHERE id = ?");
-        stUpdatePage.setString(1, page.getTypeName());
-        stUpdatePage.setString(2, mapToJSON(page.getAttributes()));
-        stUpdatePage.setLong(3, page.getId());
-        int affectedRows = stUpdatePage.executeUpdate();
+        PreparedStatement stUpdatePage = null;
 
-        if(affectedRows != 1) {
-            throw new BlException("Page with id= "+ page.getId()+", type= " + page.getTypeName()+" is not tracked by database, try create pageWithAttributes first");
+        try {
+            stUpdatePage = conn.prepareStatement("UPDATE pages SET type = ?, attributes = ?::json WHERE id = ?");
+            stUpdatePage.setString(1, page.getTypeName());
+            stUpdatePage.setString(2, mapToJSON(page.getAttributes()));
+            stUpdatePage.setLong(3, page.getId());
+            int affectedRows = stUpdatePage.executeUpdate();
+
+            if(affectedRows != 1) {
+                throw new BlException("Page with id= "+ page.getId()+", type= " + page.getTypeName()+" is not tracked by database, try create pageWithAttributes first");
+            }
+        } finally {
+            DbUtils.close(stUpdatePage);
         }
     }
 
     @Override
     public Page loadPage(long pageId) throws SQLException {
-        PreparedStatement stLoadPage = conn.prepareStatement("SELECT * FROM pages WHERE id = ?");
-        stLoadPage.setLong(1, pageId);
+        PreparedStatement stLoadPage = null;
+        ResultSet rsLoadPage = null;
 
-        ResultSet rsLoadPage = stLoadPage.executeQuery();
+        try {
+            stLoadPage = conn.prepareStatement("SELECT * FROM pages WHERE id = ?");
+            stLoadPage.setLong(1, pageId);
 
-        if (rsLoadPage.next()) {
-            Page page = new Page(rsLoadPage.getInt("id"), rsLoadPage.getString("type"));
+            rsLoadPage = stLoadPage.executeQuery();
 
-            page.setAttributes(jsonToMap(rsLoadPage.getString("attributes")));
+            if (rsLoadPage.next()) {
+                Page page = new Page(rsLoadPage.getInt("id"), rsLoadPage.getString("type"));
 
-            return page;
-        } else {
-            return null;
+                page.setAttributes(jsonToMap(rsLoadPage.getString("attributes")));
+
+                return page;
+            } else {
+                return null;
+            }
+        } finally {
+            DbUtils.close(stLoadPage);
+            DbUtils.close(rsLoadPage);
         }
-
     }
 
     @Override
@@ -131,23 +161,31 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
             throw new IllegalArgumentException();
         }
 
-        PreparedStatement stFindByType = conn.prepareStatement("SELECT * FROM pages WHERE type = ?");
-        stFindByType.setString(1,type);
+        PreparedStatement stFindByType = null;
+        ResultSet rs = null;
 
-        ResultSet rs = stFindByType.executeQuery();
-        List<Page> pages = new ArrayList<>();
+        try {
+            stFindByType = conn.prepareStatement("SELECT * FROM pages WHERE type = ?");
+            stFindByType.setString(1,type);
 
-        while(rs.next()){
-            long id = rs.getInt("ID");
-            String resultType = rs.getString("type");
-            String attributesJSON = rs.getString("attributes");
+            rs = stFindByType.executeQuery();
+            List<Page> pages = new ArrayList<>();
 
-            Page page = new Page(id, resultType);
-            page.setAttributes(jsonToMap(attributesJSON));
-            pages.add(page);
+            while(rs.next()){
+                long id = rs.getInt("ID");
+                String resultType = rs.getString("type");
+                String attributesJSON = rs.getString("attributes");
+
+                Page page = new Page(id, resultType);
+                page.setAttributes(jsonToMap(attributesJSON));
+                pages.add(page);
+            }
+
+            return pages;
+        } finally {
+            DbUtils.close(stFindByType);
+            DbUtils.close(rs);
         }
-
-        return pages;
     }
 
     @Override
@@ -156,21 +194,29 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
             throw new IllegalArgumentException();
         }
 
-        JsonArray jsonArray = getAttributeArray(attributeName, null);
+        PreparedStatement stFindByAttribute = null;
+        ResultSet rsFindPagesByAttribute = null;
 
-        PreparedStatement stFindByAttribute = conn.prepareStatement("SELECT * FROM pages WHERE attributes::jsonb @> ?::jsonb");
-        stFindByAttribute.setString(1, gson.toJson(jsonArray));
+        try {
+            JsonArray jsonArray = getAttributeArray(attributeName, null);
 
-        ResultSet rsFindPagesByAttribute = stFindByAttribute.executeQuery();
-        List<Page> pages = new ArrayList<>();
+            stFindByAttribute = conn.prepareStatement("SELECT * FROM pages WHERE attributes::jsonb @> ?::jsonb");
+            stFindByAttribute.setString(1, gson.toJson(jsonArray));
 
-        while (rsFindPagesByAttribute.next()) {
-            Page page = new Page(rsFindPagesByAttribute.getInt(1), rsFindPagesByAttribute.getString(2));
-            page.setAttributes(jsonToMap(rsFindPagesByAttribute.getString(3)));
-            pages.add(page);
+            rsFindPagesByAttribute = stFindByAttribute.executeQuery();
+            List<Page> pages = new ArrayList<>();
+
+            while (rsFindPagesByAttribute.next()) {
+                Page page = new Page(rsFindPagesByAttribute.getInt(1), rsFindPagesByAttribute.getString(2));
+                page.setAttributes(jsonToMap(rsFindPagesByAttribute.getString(3)));
+                pages.add(page);
+            }
+
+            return pages;
+        } finally {
+            DbUtils.close(stFindByAttribute);
+            DbUtils.close(rsFindPagesByAttribute);
         }
-
-        return pages;
     }
 
 
@@ -198,19 +244,30 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
         }
 
         JsonArray jsonArray = getAttributeArray(attributeName, value);
-        PreparedStatement stFindByAttributeValue = conn.prepareStatement("SELECT * FROM pages WHERE attributes::jsonb @> ?::jsonb");
-        stFindByAttributeValue.setObject(1, gson.toJson(jsonArray));
 
-        ResultSet rsFindPagesByAttributeValue = stFindByAttributeValue.executeQuery();
-        List<Page> pages = new ArrayList<>();
+        PreparedStatement stFindByAttributeValue = null;
+        ResultSet rsFindPagesByAttributeValue = null;
 
-        while (rsFindPagesByAttributeValue.next()) {
-            Page page = new Page(rsFindPagesByAttributeValue.getInt(1), rsFindPagesByAttributeValue.getString(2));
-            page.setAttributes(jsonToMap(rsFindPagesByAttributeValue.getString(3)));
-            pages.add(page);
+        try {
+            stFindByAttributeValue = conn.prepareStatement("SELECT * FROM pages WHERE attributes::jsonb @> ?::jsonb");
+            stFindByAttributeValue.setObject(1, gson.toJson(jsonArray));
+
+            rsFindPagesByAttributeValue = stFindByAttributeValue.executeQuery();
+            List<Page> pages = new ArrayList<>();
+
+            while (rsFindPagesByAttributeValue.next()) {
+                Page page = new Page(rsFindPagesByAttributeValue.getInt(1), rsFindPagesByAttributeValue.getString(2));
+                page.setAttributes(jsonToMap(rsFindPagesByAttributeValue.getString(3)));
+                pages.add(page);
+            }
+
+            return pages;
+        } finally {
+            DbUtils.close(stFindByAttributeValue);
+            DbUtils.close(rsFindPagesByAttributeValue);
         }
 
-        return pages;
+
     }
 
     private String mapToJSON(Map<String, Attribute> attributes) {
