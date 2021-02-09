@@ -47,7 +47,7 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup{
     public static void setupDatabaseValuesParameters(){
         setupName = "Best Case Scenario";
 
-        numberOfStartEntities = 100000;
+        numberOfStartEntities = 1000000;
 
         maxNumberOfAttributes = 200;
         meanNumberOfAttributes = 100;
@@ -63,12 +63,6 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup{
     static void startup(){
         setupDatabaseValuesParameters();
         setupData();
-
-        //Currently we only remember entityNames and attributeNames when generating the startData
-        //To be more flexible with creating changeSets we might have to persist them somewhere (db or text file?)
-        if(!Files.exists(Paths.get(getChangesFileName())) && entityNames != null && attributeNames != null){
-            setupChanges(numberOfChanges);
-        }
     }
 
     @Test
@@ -90,9 +84,9 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup{
     private void testChanges(IDatabaseAdapter adapter, String dbName) {
         //Here we test the performance of all parts off the entity lifecycle
         // Create -> Add attributes -> Change single attribute -> Delete page
-        log.info("Testing running attribute changes, database: {}", dbName);
+        log.info("Testing running attribute changes, database/approach: {}", dbName);
         try {
-            log.info("Started Creating page which will be changed", numberOfChanges);
+            log.info("Started Creating page which will be changed");
             Instant start = Instant.now();
 
             Page page = adapter.createPage("attributeChangeTestPage");
@@ -116,7 +110,7 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup{
             adapter.updatePage(page);
 
             Instant ends = Instant.now();
-            log.info("Finished saving {} entity attributes, duration: {}", Duration.between(starts,ends));
+            log.info("Finished saving {} entity attributes, duration: {}", meanNumberOfAttributes + 1, Duration.between(starts,ends));
 
             page.addAttribute("changeAttribute", randomAttributeValue());
 
@@ -159,7 +153,7 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup{
 
     public void testAttributeName(IDatabaseAdapter dbAdapter, String dbName){
         try {
-            log.info("Starting with Attributename lookup, DB: {}",  dbName);
+            log.info("Starting with Attributename lookup, database/approach: {}",  dbName);
             log.info("Started Checking for name, 20%");
             Instant startN2 = Instant.now();
 
@@ -194,7 +188,7 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup{
     }
 
     public void testAttributeValue(IDatabaseAdapter dbAdapter, String dbName, Attribute value){
-        log.info("Starting Attribute Value Lookup, DB: {}", dbName);
+        log.info("Starting Attribute Value Lookup, database/approach: {}", dbName);
 
 
         try {

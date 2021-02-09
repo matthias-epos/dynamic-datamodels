@@ -19,10 +19,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 @Testcontainers
 @Disabled
@@ -50,9 +47,6 @@ public abstract class PerformanceTestContainerStartup {
     static Map<String, IDatabaseAdapter> adapters = new HashMap<>();
 
     static String setupName = "Override me!!";
-
-    static String[] entityNames;
-    static String[] attributeNames;
 
     private static final Logger log = LoggerFactory.getLogger(PerformanceTestContainerStartup.class);
 
@@ -98,18 +92,16 @@ public abstract class PerformanceTestContainerStartup {
 
 
                 FillerAttributesStats filler = new FillerAttributesStats(numberOfStartAttributes, meanNumberOfAttributes, maxNumberOfAttributes);
-                StartData startData = startDataGenerator.generateStartData(numberOfStartEntities, filler, queryAttributes);
 
-                for(Page page : startData.pages){
-                    for(String key : adapters.keySet()){
-                        if(isEmptyDB.get(key)){
-                            adapters.get(key).createPageWithAttributes(page.getTypeName(), page.getAttributes());
-                        }
+                List<IDatabaseAdapter> emptyDatabases = new ArrayList<>();
+
+                for(String key : adapters.keySet()){
+                    if(isEmptyDB.get(key)){
+                        emptyDatabases.add(adapters.get(key));
                     }
                 }
 
-                entityNames = startData.entityNames;
-                attributeNames = startData.attributeNames;
+                startDataGenerator.generateStartData(numberOfStartEntities, filler, queryAttributes, emptyDatabases);
 
                 log.info("Added start data to databases");
                 //TODO add which adapters
@@ -121,16 +113,16 @@ public abstract class PerformanceTestContainerStartup {
         }
     }
 
-    public static void setupChanges(int numberOfChanges){
-        ChangesGenerator generator = new ChangesGenerator(entityNames, attributeNames, getChangesFileName(), 1);
-
-        try {
-            generator.generateChangeSets(numberOfChanges);
-        } catch (IOException ex){
-            log.error("Failed to create change set.");
-            log.error(ex.getMessage());
-        }
-    }
+//    public static void setupChanges(int numberOfChanges){
+//        ChangesGenerator generator = new ChangesGenerator(entityNames, attributeNames, getChangesFileName(), 1);
+//
+//        try {
+//            generator.generateChangeSets(numberOfChanges);
+//        } catch (IOException ex){
+//            log.error("Failed to create change set.");
+//            log.error(ex.getMessage());
+//        }
+//    }
 
     public static String getChangesFileName(){
         return setupName + "changeSet.txt";

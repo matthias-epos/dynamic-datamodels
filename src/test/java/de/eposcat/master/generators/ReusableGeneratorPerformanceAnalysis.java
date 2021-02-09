@@ -125,23 +125,16 @@ public class ReusableGeneratorPerformanceAnalysis {
 
 
                 FillerAttributesStats filler = new FillerAttributesStats(numberOfStartAttributes, meanNumberOfAttributes, maxNumberOfAttributes);
-                StartData startData = startDataGenerator.generateStartData(numberOfStartEntities, filler, queryAttributes);
 
-                oracleIds = new ArrayList<>(startData.pages.size());
-                postgresIds = new ArrayList<>(startData.pages.size());
+                List<IDatabaseAdapter> emptyDatabases = new ArrayList<>();
 
-
-                for(Page page : startData.pages){
-                    for(String key : adapters.keySet()){
-                        if(isEmptyDB.get(key)){
-                            adapters.get(key).createPageWithAttributes(page.getTypeName(), page.getAttributes());
-                            //save Ids?
-                        }
+                for(String key : adapters.keySet()){
+                    if(isEmptyDB.get(key)){
+                        emptyDatabases.add(adapters.get(key));
                     }
                 }
 
-
-
+                startDataGenerator.generateStartData(numberOfStartEntities, filler, queryAttributes, emptyDatabases);
                 log.info("Added start data to databases");
                 //TODO add which adapters
 
