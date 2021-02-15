@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -61,7 +63,13 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             st = conn.prepareStatement(CREATE_PAGE_QUERY, Statement.RETURN_GENERATED_KEYS);
             st.setString(1, typeName);
 
+            log.info("@@ Started Creation of page, EAV SQL");
+            Instant startU = Instant.now();
+
             int updatedRows = st.executeUpdate();
+
+            Instant endU = Instant.now();
+            log.info("@@ Finished Creation of page, EAV SQL, duration: {}ms", Duration.between(startU,endU).toMillis());
 
             if (updatedRows > 0) {
                 //TODO? Cancel Transaction if getting generated keys fails?
@@ -121,7 +129,13 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             st = conn.prepareStatement(REMOVE_PAGE_QUERY);
             st.setLong(1, page.getId());
 
+            log.info("@@ Started deleting page, EAV SQL");
+            Instant start = Instant.now();
+
             int affectedRows = st.executeUpdate();
+
+            Instant end = Instant.now();
+            log.info("@@ Finished deleting page, EAV SQL, duration: {}ms", Duration.between(start,end).toMillis());
 
             return (affectedRows > 0);
         } finally {
@@ -144,7 +158,14 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             st = conn.prepareStatement(UPDATE_PAGE_QUERY);
             st.setString(1, page.getTypeName());
             st.setLong(2, page.getId());
+
+            log.info("@@ Started saving page entity, EAV SQL");
+            Instant startSe = Instant.now();
+
             int affectedRows = st.executeUpdate();
+
+            Instant endSe = Instant.now();
+            log.info("@@ Finished saving page entity, EAV SQL, duration: {}ms", Duration.between(startSe,endSe).toMillis());
 
             if(affectedRows != 1) {
                 throw new BlException("Page with id= "+ page.getId()+", type= " + page.getTypeName()+" is not tracked by database, try create pageWithAttributes first");
@@ -191,7 +212,13 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             ps.setLong(1, id);
             ps.setLong(2, attId);
 
+            log.info("@@ Started removing attribute value, EAV SQL");
+            Instant startRA = Instant.now();
+
             ps.executeUpdate();
+
+            Instant endRA = Instant.now();
+            log.info("@@ Finished removing attribute value, EAV SQL, duration: {}ms", Duration.between(startRA,endRA).toMillis());
         } finally {
             DbUtils.close(ps);
         }
@@ -205,7 +232,13 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         ps.setLong(2, id);
         ps.setLong(3, att.getId());
 
+        log.info("@@ Started updating attribute value, EAV SQL");
+        Instant startUAV = Instant.now();
+
         ps.executeUpdate();
+
+        Instant endUAV = Instant.now();
+        log.info("@@ Finished updating attribute value, EAV SQL, duration: {}ms", Duration.between(startUAV,endUAV).toMillis());
 
     }
 
@@ -222,7 +255,13 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             ps.setLong(2, att.getId());
             ps.setString(3, att.getValue().toString());
 
+            log.info("@@ Started creating attribute value, EAV SQL");
+            Instant startCAV = Instant.now();
+
             int affectedRows = ps.executeUpdate();
+
+            Instant endCAV = Instant.now();
+            log.info("@@ Finished creating attribute value, EAV SQL, duration: {}ms", Duration.between(startCAV,endCAV).toMillis());
 
             if(affectedRows == 0){
                 throw new RuntimeException("Did not create Attribute Value!!");
@@ -293,7 +332,16 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             createAttributeDB.setString(1, attributeType);
             createAttributeDB.setString(2, attributeName);
 
-            if(createAttributeDB.executeUpdate() == 1) {
+            log.info("@@ Started creating new Attribute, EAV SQL");
+            Instant startCA = Instant.now();
+
+            int numberOfNewEnttries = createAttributeDB.executeUpdate();
+
+            Instant endCA = Instant.now();
+            log.info("@@ Finished creating new Attribute, EAV SQL, duration: {}ms", Duration.between(startCA,endCA).toMillis());
+
+
+            if(numberOfNewEnttries == 1) {
                 keySet = createAttributeDB.getGeneratedKeys();
                 return new AttributeBuilder().setId(getIdFromGeneratedKeys(keySet, ATTRIBUTE_TABLE)).setType(AttributeType.valueOf(attributeType)).setValue(null).createAttribute();
             } else {
@@ -320,7 +368,14 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             stLoadPage = conn.prepareStatement(FIND_PAGE_BY_ID_QUERY);
             stLoadPage.setLong(1, pageId);
 
+            log.info("@@ Started loading page, EAV SQL");
+            Instant startLP = Instant.now();
+
             rsLoadPage = stLoadPage.executeQuery();
+
+            Instant endLP = Instant.now();
+            log.info("@@ Finished loading page, EAV SQL, duration: {}ms", Duration.between(startLP, endLP).toMillis());
+
 
             if(rsLoadPage.next()) {
                 page = new Page(rsLoadPage.getInt(1), rsLoadPage.getString(2));
@@ -332,7 +387,14 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             stLoadAttributes = conn.prepareStatement(GET_PAGE_ATTRIBUTES_QUERY);
             stLoadAttributes.setLong(1, pageId);
 
+            log.info("Started loading page attributes, EAV SQL");
+            Instant startLA = Instant.now();
+
             attributesSet = stLoadAttributes.executeQuery();
+
+            Instant endLA = Instant.now();
+            log.info("Finished loading page attributes, EAV SQL, duration: {}ms", Duration.between(startLA,endLA).toMillis());
+
             while(attributesSet.next()) {
                 page.addAttribute( attributesSet.getString(4),
                         new AttributeBuilder().setId(attributesSet.getLong(1)).setType(AttributeType.valueOf(attributesSet.getString(3))).setValue(attributesSet.getString(2)).createAttribute());
@@ -361,7 +423,14 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         try {
             stFindPagesByAttribute = conn.prepareStatement(FIND_PAGE_BY_TYPE_QUERY);
             stFindPagesByAttribute.setString(1, type);
+
+            log.info("@@ Started finding pages by type, EAV SQL");
+            Instant startQT = Instant.now();
+
             rsPages = stFindPagesByAttribute.executeQuery();
+
+            Instant endQT = Instant.now();
+            log.info("@@ Finished finding pages by type, EAV SQL, duration: {}ms", Duration.between(startQT,endQT).toMillis());
 
             List<Page> pageList= new ArrayList<>();
 
@@ -389,7 +458,14 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         try {
             stFindPagesByAttribute = conn.prepareStatement(FIND_PAGE_BY_ATTRIBUTE_QUERY);
             stFindPagesByAttribute.setString(1, attributeName);
+
+            log.info("@@ Started finding pages by attribute name, EAV SQL");
+            Instant startQN = Instant.now();
+
             rsPages = stFindPagesByAttribute.executeQuery();
+
+            Instant endQN = Instant.now();
+            log.info("@@ Finished finding pages by attribute name, EAV SQL, duration: {}ms", Duration.between(startQN,endQN).toMillis());
 
             List<Page> pageList= new ArrayList<>();
 
@@ -427,7 +503,14 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             stFindPagesByAttributeValue = conn.prepareStatement(FIND_PAGE_BY_ATTRIBUTE_VALUE_QUERY);
             stFindPagesByAttributeValue.setString(1, attributeName);
             stFindPagesByAttributeValue.setString(2, value.getValue().toString());
+
+            log.info("@@ Started finding by attribute value, EAV SQL");
+            Instant startQV = Instant.now();
+
             rsPages = stFindPagesByAttributeValue.executeQuery();
+
+            Instant endQV = Instant.now();
+            log.info("@@ Finished finding by attribute value, EAV SQL, duration: {}ms", Duration.between(startQV,endQV).toMillis());
 
             List<Page> pageList= new ArrayList<>();
 
