@@ -1,27 +1,24 @@
 package de.eposcat.master.approachImpl;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import de.eposcat.master.connection.AbstractConnectionManager;
+import de.eposcat.master.connection.CustomOracleConnectionManager;
+import de.eposcat.master.connection.PostgresConnectionManager;
+import de.eposcat.master.exceptions.BlException;
+import de.eposcat.master.model.Attribute;
+import de.eposcat.master.model.AttributeBuilder;
+import de.eposcat.master.model.AttributeType;
+import de.eposcat.master.model.Page;
+import org.apache.commons.dbutils.DbUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.sql.*;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import de.eposcat.master.connection.AbstractConnectionManager;
-import de.eposcat.master.model.AttributeBuilder;
-import de.eposcat.master.model.Page;
-import de.eposcat.master.exceptions.BlException;
-import de.eposcat.master.model.Attribute;
-import de.eposcat.master.model.AttributeType;
-import oracle.jdbc.proxy.annotation.Pre;
-import org.apache.commons.dbutils.DbUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 public class EAV_DatabaseAdapter implements IDatabaseAdapter {
@@ -37,6 +34,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     private static final String FIND_PAGE_BY_TYPE_QUERY = "SELECT id FROM entities WHERE typename = ?";
     private static final String GET_PAGE_ATTRIBUTES_QUERY = "SELECT eav_values.att_id, value, datatype, name FROM eav_values INNER JOIN attributes ON eav_values.att_id = attributes.id WHERE ent_id = ?";
     private static final String GET_LAST_ATTRIBUTE_IDS_QUERY = "SELECT att_id FROM eav_values WHERE ent_id = ?";
+    private static final String ORACLE_FIND_PAGE_BY_ATTRIBUTE_VALUE_QUERY = "SELECT eav_values.ent_id FROM attributes Inner JOIN eav_values ON eav_values.att_id = attributes.id WHERE attributes.name = ? AND DBMS_LOB.INSTR(eav_values.value, ?) > 0";
     private static final String FIND_PAGE_BY_ATTRIBUTE_VALUE_QUERY = "SELECT eav_values.ent_id FROM attributes Inner JOIN eav_values ON eav_values.att_id = attributes.id WHERE attributes.name = ? AND eav_values.value = ?";
     private static final String FIND_PAGE_BY_ATTRIBUTE_QUERY = "SELECT eav_values.ent_id FROM attributes Inner JOIN eav_values ON eav_values.att_id = attributes.id WHERE attributes.name = ?";
     private static final String REMOVE_PAGE_QUERY = "DELETE FROM entities WHERE id = ?";
@@ -46,8 +44,16 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     private final static String ATTRIBUTE_TABLE = "attributeTable";
 
     private static final Logger log = LoggerFactory.getLogger(EAV_DatabaseAdapter.class);
+    private String dbContext = "";
 
     public EAV_DatabaseAdapter(AbstractConnectionManager connectionManager) {
+
+        //really ugly, but comparing clobs in oracle needs a custom query....
+        if(connectionManager instanceof CustomOracleConnectionManager){
+            dbContext = "oracle";
+        } else if(connectionManager instanceof PostgresConnectionManager){
+            dbContext = "postgres";
+        }
         this.conn = connectionManager.getConnection();
     }
 
@@ -500,7 +506,14 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         ResultSet rsPages = null;
 
         try {
-            stFindPagesByAttributeValue = conn.prepareStatement(FIND_PAGE_BY_ATTRIBUTE_VALUE_QUERY);
+            String dbDependentQuery = "";
+
+            if(dbContext.equals("oracle")){
+                dbDependentQuery = ORACLE_FIND_PAGE_BY_ATTRIBUTE_VALUE_QUERY;
+            } else {
+                dbDependentQuery = FIND_PAGE_BY_ATTRIBUTE_VALUE_QUERY;
+            }
+            stFindPagesByAttributeValue = conn.prepareStatement(dbDependentQuery);
             stFindPagesByAttributeValue.setString(1, attributeName);
             stFindPagesByAttributeValue.setString(2, value.getValue().toString());
 
