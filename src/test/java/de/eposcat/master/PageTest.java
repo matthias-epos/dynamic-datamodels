@@ -338,6 +338,7 @@ public class PageTest {
 
         } catch (SQLException e) {
             e.printStackTrace();
+            fail();
         }
     }
 
