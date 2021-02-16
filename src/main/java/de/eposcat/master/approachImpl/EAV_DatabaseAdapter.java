@@ -440,8 +440,10 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
 
             List<Page> pageList= new ArrayList<>();
 
-            while(rsPages.next()) {
+            int i = 0;
+            while(rsPages.next() && i<100) {
                 pageList.add(loadPage(rsPages.getInt(1)));
+                i++;
             }
 
             return pageList;
@@ -475,8 +477,10 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
 
             List<Page> pageList= new ArrayList<>();
 
-            while(rsPages.next()) {
+            int i = 0;
+            while(rsPages.next() && i<100) {
                 pageList.add(loadPage(rsPages.getInt(1)));
+                i++;
             }
 
             return pageList;
@@ -527,8 +531,10 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
 
             List<Page> pageList= new ArrayList<>();
 
-            while(rsPages.next()) {
+            int i = 0;
+            while(rsPages.next() && i < 100) {
                 pageList.add(loadPage(rsPages.getInt(1)));
+                i++;
             }
 
             return pageList;
