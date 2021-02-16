@@ -47,7 +47,7 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup{
     public static void setupDatabaseValuesParameters(){
         setupName = "Best Case Scenario";
 
-        numberOfStartEntities = 1000000;
+        numberOfStartEntities = 100000;
 
         maxNumberOfAttributes = 200;
         meanNumberOfAttributes = 100;
