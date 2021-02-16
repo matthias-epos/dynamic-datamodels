@@ -22,7 +22,7 @@ CREATE TABLE attributes (
 CREATE TABLE eav_values (
 	ent_id NUMBER,
 	att_id Number,
-	value varchar2(255),
+	value clob,
 	CONSTRAINT "EAV_VALUES_PK_D" PRIMARY KEY (ent_id, att_id)
 );
 

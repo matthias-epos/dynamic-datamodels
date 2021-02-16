@@ -29,7 +29,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE TABLE eav_values (
       ent_id int,
       att_id int,
-      value varchar(255),
+      value text,
       PRIMARY KEY (ent_id, att_id)
     );
 

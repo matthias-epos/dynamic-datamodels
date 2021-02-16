@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,12 +24,16 @@ import de.eposcat.master.model.Page;
 import de.eposcat.master.serializer.AttributesDeserializer;
 import de.eposcat.master.serializer.AttributesSerializer;
 import org.apache.commons.dbutils.DbUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JSON_Oracle_DatabaseAdapter implements IDatabaseAdapter {
     
     private final Connection conn;
     private final Gson gson;
     private final Type attributeType = new TypeToken<Map<String, Attribute>>(){}.getType();
+
+    private static final Logger log = LoggerFactory.getLogger(JSON_Oracle_DatabaseAdapter.class);
     
     public JSON_Oracle_DatabaseAdapter(AbstractConnectionManager connectionManager) {
         this.conn = connectionManager.getConnection();
@@ -57,7 +63,13 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
             stCreatePage.setString(1, typename);
             stCreatePage.setObject(2, mapToJSON(attributes));
 
+            log.info("@@ Started creating page, Oracle JSON SQL");
+            Instant startCP = Instant.now();
+
             int affectedRows = stCreatePage.executeUpdate();
+
+            Instant endCP = Instant.now();
+            log.info("@@ Finished creating page, JSON SQL, duration: {}ms", Duration.between(startCP,endCP).toMillis());
 
             if(affectedRows > 0) {
                 newRow = stCreatePage.getGeneratedKeys();
@@ -117,7 +129,14 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
             st = conn.prepareStatement("DELETE FROM pages WHERE ID = ?");
             st.setLong(1, page.getId());
 
+            log.info("@@ Started deleting page, Oracle JSON SQL");
+            Instant startDP = Instant.now();
+
             int affectedRows = st.executeUpdate();
+
+            Instant endDP = Instant.now();
+            log.info("@@ Finished deleting page, Oracle JSON SQL, duration: {}ms", Duration.between(startDP,endDP).toMillis());
+
 
             return (affectedRows > 0);
         } finally {
@@ -138,7 +157,14 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
             stUpdatePage.setString(1, page.getTypeName());
             stUpdatePage.setString(2, mapToJSON(page.getAttributes()));
             stUpdatePage.setLong(3, page.getId());
+
+            log.info("@@ Started updating page, Oracle JSON SQL");
+            Instant startUP = Instant.now();
+
             int affectedRows = stUpdatePage.executeUpdate();
+
+            Instant endUP = Instant.now();
+            log.info("@@ Finished updating page, Oracle JSON SQL, duration: {}ms", Duration.between(startUP,endUP).toMillis());
 
             if(affectedRows != 1) {
                 throw new BlException("Page with id= "+ page.getId()+", type= " + page.getTypeName()+" is not tracked by database, try create pageWithAttributes first");
@@ -158,7 +184,14 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
             stLoadPage = conn.prepareStatement("SELECT * FROM pages WHERE id = ?");
             stLoadPage.setLong(1, pageId);
 
+            log.info("@@ Started loading page, Oracle JSON SQL");
+            Instant startLP = Instant.now();
+
             rsLoadPage = stLoadPage.executeQuery();
+
+            Instant endLP = Instant.now();
+            log.info("@@ Finished loading page, Oracle JSON SQL, duration: {}ms", Duration.between(startLP,endLP).toMillis());
+
             if(rsLoadPage.next()) {
                 Page page = new Page(rsLoadPage.getInt("id"), rsLoadPage.getString("type"));
 
@@ -186,7 +219,14 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
             stFindByType = conn.prepareStatement("SELECT * FROM pages WHERE type = ?");
             stFindByType.setString(1,type);
 
+            log.info("@@ Started finding page by type, Oracle JSON SQL");
+            Instant startFP = Instant.now();
+
             rs = stFindByType.executeQuery();
+
+            Instant endFP = Instant.now();
+            log.info("@@ Finished finding page by type, Oracle JSON SQL, duration: {}ms", Duration.between(startFP,endFP).toMillis());
+
             List<Page> pages = new ArrayList<>();
 
             while(rs.next()){
@@ -235,7 +275,14 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
 
             stFindByAttribute = conn.prepareStatement(queryString);
 
+            log.info("@@ Started finding pages by attribute name, Oracle JSON SQL");
+            Instant startQAN = Instant.now();
+
             rsFindPagesByAttribute = stFindByAttribute.executeQuery();
+
+            Instant endQAN = Instant.now();
+            log.info("@@ Finished finding pages by attribute name, Oracle JSON SQL, duration: {}ms", Duration.between(startQAN,endQAN).toMillis());
+
             List<Page> pages = new ArrayList<>();
 
             while(rsFindPagesByAttribute.next()) {
@@ -282,7 +329,14 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
 
             stFindByAttributeValue = conn.prepareStatement(queryString);
 
+            log.info("@@ Started finding pages by attribute value, Oracle JSON SQL");
+            Instant startQAV = Instant.now();
+
             rsFindPagesByAttributeValue = stFindByAttributeValue.executeQuery();
+
+            Instant endQAV = Instant.now();
+            log.info("@@ Finished finding pages by attribute value, Oracle JSON SQL, duration: {}ms", Duration.between(startQAV,endQAV).toMillis());
+
             List<Page> pages = new ArrayList<>();
 
             while(rsFindPagesByAttributeValue.next()) {

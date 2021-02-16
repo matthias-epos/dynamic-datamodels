@@ -1,5 +1,6 @@
 package de.eposcat.master.generators;
 
+import de.eposcat.master.approachImpl.EAV_DatabaseAdapter;
 import de.eposcat.master.approachImpl.IDatabaseAdapter;
 import de.eposcat.master.approachImpl.JSON_Oracle_DatabaseAdapter;
 import de.eposcat.master.approachImpl.JSON_Postgres_DatabaseAdapter;
@@ -16,11 +17,9 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.io.IOException;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 @Testcontainers
 @Disabled
@@ -42,6 +41,9 @@ public abstract class PerformanceTestContainerStartup {
     static IDatabaseAdapter oracleJsonDBAdapter;
     static IDatabaseAdapter postgresJsonDBAdapter;
 
+    static IDatabaseAdapter oracleEavDBAdapter;
+    static IDatabaseAdapter postgresEavDBAdapter;
+
     static Map<String, IDatabaseAdapter> adapters = new HashMap<>();
 
     static String setupName = "Override me!!";
@@ -57,13 +59,23 @@ public abstract class PerformanceTestContainerStartup {
     }
 
     public static void setupData(){
-        CustomOracleConnectionManager oracleConnectionManager = new CustomOracleConnectionManager(RelationalApproach.JSON, "localhost", oracle.getMappedPort(1521), "json", "json");
-        oracleJsonDBAdapter = new JSON_Oracle_DatabaseAdapter(oracleConnectionManager);
+        CustomOracleConnectionManager oracleJsonConnectionManager = new CustomOracleConnectionManager(RelationalApproach.JSON, "localhost", oracle.getMappedPort(1521), "json", "json");
+        oracleJsonDBAdapter = new JSON_Oracle_DatabaseAdapter(oracleJsonConnectionManager);
         adapters.put("oracleJson", oracleJsonDBAdapter);
 
-        PostgresConnectionManager postgresConnectionManager = new PostgresConnectionManager(RelationalApproach.JSON, "localhost", postgres.getMappedPort(5432), "postgres", "admin");
-        postgresJsonDBAdapter = new JSON_Postgres_DatabaseAdapter(postgresConnectionManager);
+        CustomOracleConnectionManager oracleEavConnectionManager = new CustomOracleConnectionManager(RelationalApproach.EAV, "localhost", oracle.getMappedPort(1521), "eav", "eav");
+        oracleEavDBAdapter = new EAV_DatabaseAdapter(oracleEavConnectionManager);
+        adapters.put("oracleEav", oracleEavDBAdapter);
+
+        PostgresConnectionManager postgresJsonConnectionManager = new PostgresConnectionManager(RelationalApproach.JSON, "localhost", postgres.getMappedPort(5432), "postgres", "admin");
+        postgresJsonDBAdapter = new JSON_Postgres_DatabaseAdapter(postgresJsonConnectionManager);
         adapters.put("postgresJson", postgresJsonDBAdapter);
+
+        PostgresConnectionManager postgresEavConnectionManager = new PostgresConnectionManager(RelationalApproach.EAV, "localhost", postgres.getMappedPort(5432), "postgres", "admin");
+        postgresEavDBAdapter = new EAV_DatabaseAdapter(postgresEavConnectionManager);
+        adapters.put("postgresEav", postgresEavDBAdapter);
+
+
 
         try {
             log.info("Started Containers, generating initial data if no data exists yet");
@@ -80,15 +92,16 @@ public abstract class PerformanceTestContainerStartup {
 
 
                 FillerAttributesStats filler = new FillerAttributesStats(numberOfStartAttributes, meanNumberOfAttributes, maxNumberOfAttributes);
-                StartData startData = startDataGenerator.generateStartData(numberOfStartEntities, filler, queryAttributes);
 
-                for(Page page : startData.pages){
-                    for(String key : adapters.keySet()){
-                        if(isEmptyDB.get(key)){
-                            adapters.get(key).createPageWithAttributes(page.getTypeName(), page.getAttributes());
-                        }
+                List<IDatabaseAdapter> emptyDatabases = new ArrayList<>();
+
+                for(String key : adapters.keySet()){
+                    if(isEmptyDB.get(key)){
+                        emptyDatabases.add(adapters.get(key));
                     }
                 }
+
+                startDataGenerator.generateStartData(numberOfStartEntities, filler, queryAttributes, emptyDatabases);
 
                 log.info("Added start data to databases");
                 //TODO add which adapters
@@ -98,5 +111,20 @@ public abstract class PerformanceTestContainerStartup {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+//    public static void setupChanges(int numberOfChanges){
+//        ChangesGenerator generator = new ChangesGenerator(entityNames, attributeNames, getChangesFileName(), 1);
+//
+//        try {
+//            generator.generateChangeSets(numberOfChanges);
+//        } catch (IOException ex){
+//            log.error("Failed to create change set.");
+//            log.error(ex.getMessage());
+//        }
+//    }
+
+    public static String getChangesFileName(){
+        return setupName + "changeSet.txt";
     }
 }

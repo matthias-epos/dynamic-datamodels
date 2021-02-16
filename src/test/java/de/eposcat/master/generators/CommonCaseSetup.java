@@ -5,16 +5,18 @@ import de.eposcat.master.generators.data.PerformanceTestAttribute;
 import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.AttributeBuilder;
 import de.eposcat.master.model.AttributeType;
+import de.eposcat.master.model.Page;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -34,6 +36,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class CommonCaseSetup extends PerformanceTestContainerStartup{
 
     private static final Logger log = LoggerFactory.getLogger(CommonCaseSetup.class);
+
+    static int numberOfChanges = 5000;
 
     static {
         setupContainers("commonCase");
@@ -69,16 +73,87 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup{
         for(String key: adapters.keySet()){
             testAttributeName(adapters.get(key), key);
             testAttributeValue(adapters.get(key), key, new AttributeBuilder().setValue("true").setType(AttributeType.String).createAttribute());
+            testChanges(adapters.get(key), key);
+
         }
 
         Instant endPt = Instant.now();
         log.info("Finished SimplePerformanceTest, duration: {}", Duration.between(startPt,endPt));
     }
 
+    private void testChanges(IDatabaseAdapter adapter, String dbName) {
+        //Here we test the performance of all parts off the entity lifecycle
+        // Create -> Add attributes -> Change single attribute -> Delete page
+        log.info("Testing running attribute changes, database/approach: {}", dbName);
+        try {
+            log.info("Started Creating page which will be changed");
+            Instant start = Instant.now();
+
+            Page page = adapter.createPage("attributeChangeTestPage");
+
+            Instant end = Instant.now();
+            Duration duration = Duration.between(start,end);
+            log.info("Finished Creating page which will be changed, duration: {}", duration);
+
+            Map<String, Attribute> newAttributes = new HashMap<>();
+
+            for (int i = 0; i<meanNumberOfAttributes; i++){
+                newAttributes.put(randomAttributeName(), randomAttributeValue());
+            }
+
+            newAttributes.put("changeAttribute", randomAttributeValue());
+            page.setAttributes(newAttributes);
+
+            log.info("Started saving {} entity attributes", meanNumberOfAttributes + 1);
+            Instant starts = Instant.now();
+
+            adapter.updatePage(page);
+
+            Instant ends = Instant.now();
+            log.info("Finished saving {} entity attributes, duration: {}", meanNumberOfAttributes + 1, Duration.between(starts,ends));
+
+            page.addAttribute("changeAttribute", randomAttributeValue());
+
+            log.info("Started changing single attribute value");
+            Instant startC1 = Instant.now();
+
+            adapter.updatePage(page);
+
+            Instant endC1 = Instant.now();
+            log.info("Finished changing single attribute value, duration: {}", Duration.between(startC1,endC1));
+
+            log.info("Started deleting page");
+            Instant startD = Instant.now();
+
+            adapter.deletePage(page.getId());
+
+            Instant endD = Instant.now();
+            log.info("Finished deleting page, duration: {}", Duration.between(startD,endD));
+
+        } catch (SQLException throwables) {
+            log.error("Failed to execute changes");
+            log.error(throwables.getMessage());
+            throwables.printStackTrace();
+            fail();
+        }
+    }
+
+    private Attribute randomAttributeValue() {
+        Random r = new Random();
+        return new AttributeBuilder().setType(AttributeType.String).setValue(r.nextInt(400)).createAttribute();
+    }
+
+    private String randomAttributeName() {
+        Random r = new Random();
+        StartDataGenerator stg = new StartDataGenerator(r.nextInt());
+
+        return  stg.getRandomEntityName();
+    }
+
 
     public void testAttributeName(IDatabaseAdapter dbAdapter, String dbName){
         try {
-            log.info("Starting with Attributename lookup, DB: {}",  dbName);
+            log.info("Starting with Attributename lookup, database/approach: {}",  dbName);
             log.info("Started Checking for name, 20%");
             Instant startN2 = Instant.now();
 
@@ -113,7 +188,7 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup{
     }
 
     public void testAttributeValue(IDatabaseAdapter dbAdapter, String dbName, Attribute value){
-        log.info("Starting Attribute Value Lookup, DB: {}", dbName);
+        log.info("Starting Attribute Value Lookup, database/approach: {}", dbName);
 
 
         try {

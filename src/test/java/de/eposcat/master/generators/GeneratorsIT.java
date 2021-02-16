@@ -91,11 +91,7 @@ public class GeneratorsIT {
 
             //TODO Put arguments into a builder?
             FillerAttributesStats filler = new FillerAttributesStats(numberOfStartAttributes, meanNumberOfAttributes, maxNumberOfAttributes);
-            StartData startData = startDataGenerator.generateStartData(numberOfStartEntities, filler, getExampleAtt(new Random(1)));
-
-            for (Page page : startData.pages) {
-                dbAdapter.createPageWithAttributes(page.getTypeName(), page.getAttributes());
-            }
+            startDataGenerator.generateStartData(numberOfStartEntities, filler, getExampleAtt(new Random(1)), Arrays.asList(dbAdapter));
 
             Instant end = Instant.now();
             log.info("Finished Generating {} initial pages, duration: {}",

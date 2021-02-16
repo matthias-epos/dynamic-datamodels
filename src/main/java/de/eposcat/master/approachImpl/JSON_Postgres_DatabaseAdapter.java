@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +23,8 @@ import de.eposcat.master.model.Page;
 import de.eposcat.master.serializer.AttributesDeserializer;
 import de.eposcat.master.serializer.AttributesSerializer;
 import org.apache.commons.dbutils.DbUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
@@ -28,6 +32,8 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
     private final Connection conn;
     private final Gson gson;
     private final Type attributeType = new TypeToken<Map<String, Attribute>>() {}.getType();
+
+    private static final Logger log = LoggerFactory.getLogger(JSON_Postgres_DatabaseAdapter.class);
 
     public JSON_Postgres_DatabaseAdapter(AbstractConnectionManager connectionManager) {
         this.conn = connectionManager.getConnection();
@@ -58,7 +64,14 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
             stCreatePage.setString(1, typename);
             stCreatePage.setObject(2, mapToJSON(attributes));
 
+            log.info("@@ Started creating page, PostgreSQL JSON SQL");
+            Instant startCP = Instant.now();
+
             int affectedRows = stCreatePage.executeUpdate();
+
+            Instant endCP = Instant.now();
+            log.info("@@ Finished creating page, PostgreSQL JSON SQL, duration: {}ms", Duration.between(startCP,endCP).toMillis());
+
 
             if (affectedRows > 0) {
                 key = stCreatePage.getGeneratedKeys();
@@ -98,7 +111,14 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
             st = conn.prepareStatement("DELETE FROM pages WHERE ID = ?");
             st.setLong(1, page.getId());
 
+            log.info("@@ Started deleting page, PostgreSQL JSON SQL");
+            Instant startDP = Instant.now();
+
             int affectedRows = st.executeUpdate();
+
+            Instant endDP = Instant.now();
+            log.info("@@ Finished deleting page, PostgreSQL JSON SQL, duration: {}ms", Duration.between(startDP,endDP).toMillis());
+
 
             return (affectedRows > 0);
         } finally {
@@ -119,7 +139,13 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
             stUpdatePage.setString(1, page.getTypeName());
             stUpdatePage.setString(2, mapToJSON(page.getAttributes()));
             stUpdatePage.setLong(3, page.getId());
+            log.info("@@ Started updating page, PostgreSQL JSON SQL");
+            Instant startUP = Instant.now();
+
             int affectedRows = stUpdatePage.executeUpdate();
+
+            Instant endUP = Instant.now();
+            log.info("@@ Finished updating page, PostgreSQL JSON SQL, duration: {}ms", Duration.between(startUP,endUP).toMillis());
 
             if(affectedRows != 1) {
                 throw new BlException("Page with id= "+ page.getId()+", type= " + page.getTypeName()+" is not tracked by database, try create pageWithAttributes first");
@@ -138,7 +164,13 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
             stLoadPage = conn.prepareStatement("SELECT * FROM pages WHERE id = ?");
             stLoadPage.setLong(1, pageId);
 
+            log.info("@@ Started loading page, PostgreSQL JSON SQL");
+            Instant start = Instant.now();
+
             rsLoadPage = stLoadPage.executeQuery();
+
+            Instant end = Instant.now();
+            log.info("@@ Finished loading page, PostgreSQL JSON SQL, duration: {}ms", Duration.between(start,end).toMillis());
 
             if (rsLoadPage.next()) {
                 Page page = new Page(rsLoadPage.getInt("id"), rsLoadPage.getString("type"));
@@ -168,7 +200,13 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
             stFindByType = conn.prepareStatement("SELECT * FROM pages WHERE type = ?");
             stFindByType.setString(1,type);
 
+            log.info("@@ Started finding page by type, PostgreSQL JSON SQL");
+            Instant startQPT = Instant.now();
+
             rs = stFindByType.executeQuery();
+
+            Instant endQPT = Instant.now();
+            log.info("@@ Finished finding page by type, PostgreSQL JSON SQL, duration: {}ms", Duration.between(startQPT,endQPT).toMillis());
             List<Page> pages = new ArrayList<>();
 
             while(rs.next()){
@@ -203,7 +241,13 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
             stFindByAttribute = conn.prepareStatement("SELECT * FROM pages WHERE attributes::jsonb @> ?::jsonb");
             stFindByAttribute.setString(1, gson.toJson(jsonArray));
 
+            log.info("@@ Started finding page by attribute name, PostgreSQL JSON SQL");
+            Instant startQAN = Instant.now();
+
             rsFindPagesByAttribute = stFindByAttribute.executeQuery();
+
+            Instant endQAN = Instant.now();
+            log.info("@@ Finished finding page by attribute name, PostgreSQL JSON SQL, duration: {}ms", Duration.between(startQAN,endQAN).toMillis());
             List<Page> pages = new ArrayList<>();
 
             while (rsFindPagesByAttribute.next()) {
@@ -252,7 +296,13 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
             stFindByAttributeValue = conn.prepareStatement("SELECT * FROM pages WHERE attributes::jsonb @> ?::jsonb");
             stFindByAttributeValue.setObject(1, gson.toJson(jsonArray));
 
+            log.info("@@ Started finding pages by attribute vale, PostgreSQL JSON SQL");
+            Instant startQAV = Instant.now();
+
             rsFindPagesByAttributeValue = stFindByAttributeValue.executeQuery();
+
+            Instant endQAV = Instant.now();
+            log.info("@@ Finished finding pages by attribute vale, PostgreSQL JSON SQL, duration: {}ms", Duration.between(startQAV,endQAV).toMillis());
             List<Page> pages = new ArrayList<>();
 
             while (rsFindPagesByAttributeValue.next()) {

@@ -18,6 +18,14 @@ public class ChangesGenerator {
     Gson gson;
     String targetPath;
 
+    /**
+     * Class used to generate a list of changes and save them in a textfile. Use {@link de.eposcat.master.generators.ChangeRunner} to execute the changes.
+     *
+     * @param startEntityNames  unique text identifiers of entities in the database
+     * @param startAttributeNames   name of filler attribute names
+     * @param targetPath    path where to save the textfile
+     * @param seed  RNG-seed
+     */
     public ChangesGenerator(String[] startEntityNames, String[] startAttributeNames, String targetPath, int seed) {
         this.startEntityNames = startEntityNames;
         this.startAttributeNames = startAttributeNames;
@@ -38,7 +46,6 @@ public class ChangesGenerator {
 
             if(actionRoll > 0.95){
                 change = new Change(entityName, ChangeAction.REMOVE, "", "");
-                //removeAnAttribute -> need current attributes??
             } else if(actionRoll > 0.7){
                 String attr;
 
@@ -49,10 +56,8 @@ public class ChangesGenerator {
                 }
 
                 change = new Change(entityName, ChangeAction.ADD, attr, "new" + getRandomAttributeValue());
-                //addAttribute
             } else {
                 change = new Change(entityName, ChangeAction.CHANGE, "", "chg" + getRandomAttributeValue());
-                //changeAttribute
             }
 
             writer.write(gson.toJson(change) + System.lineSeparator());
