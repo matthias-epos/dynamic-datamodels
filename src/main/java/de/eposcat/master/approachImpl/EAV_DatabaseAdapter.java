@@ -232,19 +232,25 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     private void updateAttributeValue(long id, Attribute att) throws SQLException{
-        PreparedStatement ps = conn.prepareStatement(UPDATE_ATTRIBUTE_VALUE_QUERY);
+        PreparedStatement ps = null;
 
-        ps.setString(1, att.getValue().toString());
-        ps.setLong(2, id);
-        ps.setLong(3, att.getId());
+        try {
+            ps = conn.prepareStatement(UPDATE_ATTRIBUTE_VALUE_QUERY);
 
-        log.info("@@ Started updating attribute value, EAV SQL");
-        Instant startUAV = Instant.now();
+            ps.setString(1, att.getValue().toString());
+            ps.setLong(2, id);
+            ps.setLong(3, att.getId());
 
-        ps.executeUpdate();
+            log.info("@@ Started updating attribute value, EAV SQL");
+            Instant startUAV = Instant.now();
 
-        Instant endUAV = Instant.now();
-        log.info("@@ Finished updating attribute value, EAV SQL, duration: {}ms", Duration.between(startUAV,endUAV).toMillis());
+            ps.executeUpdate();
+
+            Instant endUAV = Instant.now();
+            log.info("@@ Finished updating attribute value, EAV SQL, duration: {}ms", Duration.between(startUAV,endUAV).toMillis());
+        } finally {
+            DbUtils.close(ps);
+        }
 
     }
 
