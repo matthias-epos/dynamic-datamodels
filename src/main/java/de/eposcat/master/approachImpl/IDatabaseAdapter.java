@@ -7,6 +7,8 @@ import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.Page;
 
 public interface IDatabaseAdapter {
+    static final int defaultPageSize = 100;
+
     /**
      * Creates a new page entry in the database and returns the representing page object.
      * This page has no attributes at creation.
@@ -77,4 +79,8 @@ public interface IDatabaseAdapter {
      * @throws SQLException if the implementation or database connection are malfunctioning
      */
     List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException;
+
+    default int getQueryPageSize(){
+        return defaultPageSize;
+    }
 }

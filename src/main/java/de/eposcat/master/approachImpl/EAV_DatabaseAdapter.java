@@ -447,7 +447,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             List<Page> pageList= new ArrayList<>();
 
             int i = 0;
-            while(rsPages.next() && i<100) {
+            while(rsPages.next() && i<getQueryPageSize()) {
                 pageList.add(loadPage(rsPages.getInt(1)));
                 i++;
             }
@@ -484,7 +484,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             List<Page> pageList= new ArrayList<>();
 
             int i = 0;
-            while(rsPages.next() && i<100) {
+            while(rsPages.next() && i<getQueryPageSize()) {
                 pageList.add(loadPage(rsPages.getInt(1)));
                 i++;
             }
@@ -538,7 +538,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             List<Page> pageList= new ArrayList<>();
 
             int i = 0;
-            while(rsPages.next() && i < 100) {
+            while(rsPages.next() && i < getQueryPageSize()) {
                 pageList.add(loadPage(rsPages.getInt(1)));
                 i++;
             }

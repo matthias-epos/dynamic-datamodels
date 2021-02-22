@@ -230,7 +230,7 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
             List<Page> pages = new ArrayList<>();
 
             int i = 0;
-            while(rs.next() && i<100){
+            while(rs.next() && i<getQueryPageSize()){
                 long id = rs.getInt("ID");
                 String resultType = rs.getString("type");
                 String attributesJSON = rs.getString("attributes");
@@ -289,7 +289,7 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
             List<Page> pages = new ArrayList<>();
 
             int i = 0;
-            while(rsFindPagesByAttribute.next() && i<100) {
+            while(rsFindPagesByAttribute.next() && i<getQueryPageSize()) {
                 Page page = new Page(rsFindPagesByAttribute.getInt(1), rsFindPagesByAttribute.getString(2));
                 page.setAttributes(jsonToMap(rsFindPagesByAttribute.getString(3)));
                 pages.add(page);
@@ -345,7 +345,7 @@ public Page createPageWithAttributes(String typename, Map<String, Attribute> att
             List<Page> pages = new ArrayList<>();
 
             int i = 0;
-            while(rsFindPagesByAttributeValue.next() && i<100) {
+            while(rsFindPagesByAttributeValue.next() && i<getQueryPageSize()) {
                 Page page = new Page(rsFindPagesByAttributeValue.getInt(1), rsFindPagesByAttributeValue.getString(2));
                 page.setAttributes(jsonToMap(rsFindPagesByAttributeValue.getString(3)));
                 pages.add(page);
