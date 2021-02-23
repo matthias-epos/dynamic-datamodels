@@ -8,12 +8,16 @@ import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.AttributeBuilder;
 import de.eposcat.master.model.AttributeType;
 import de.eposcat.master.model.Page;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.*;
 
 public class StartDataGenerator {
     private final Random random;
+
+    private static final Logger log = LoggerFactory.getLogger(StartDataGenerator.class);
 
     public StartDataGenerator(int seed) {
         random = new Random(seed);
@@ -54,6 +58,12 @@ public class StartDataGenerator {
                 } catch (SQLException throwables) {
                     throwables.printStackTrace();
                 }
+            }
+
+            if(i % (numberOfStartEntities / 100f) == 0){
+                log.info("%%%");
+                log.info("Progress: {}", i / (float) numberOfStartEntities);
+                log.info("%%%");
             }
         }
     }
