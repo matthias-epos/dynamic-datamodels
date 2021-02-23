@@ -214,8 +214,11 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <configuration>
-          <executable>buildDockerImages${script.extension}</executable>
-          <workingDirectory>docker/</workingDirectory>
+		<executable>docker/buildDockerImages${script.extension}</executable>
+	<arguments>
+		<argument>mvn</argument>
+	</arguments>
+  
         </configuration>
         <version>1.6.0</version>
         <executions>
