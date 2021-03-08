@@ -11,8 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
@@ -71,10 +69,34 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup{
         Instant startPt = Instant.now();
 
         for(String key: adapters.keySet()){
+            log.info("++++++++++++++++++++++ " + key + " Warmup start +++++++++++++++++++++++++");
+            for (int i = 0 ; i<5; i++){
+                log.info("Started one test runthrough");
+                Instant startR = Instant.now();
+
+                testAttributeName(adapters.get(key), key);
+                testAttributeValue(adapters.get(key), key, new AttributeBuilder().setValue("true").setType(AttributeType.String).createAttribute());
+                testChanges(adapters.get(key), key);
+
+                Instant endR = Instant.now();
+                log.info("* WARMUP TIMER *");
+                log.info("Run: {}; Time: {}", i, Duration.between(startR,endR));
+                log.info("* WARMUP TIMER *");
+            }
+
+            log.info("++++++++++++++++++++++ " + key + " Warmup end +++++++++++++++++++++++++");
+
+            log.info("Lets do this!!!");
+            log.info("********************** Started real run **********************");
+            Instant startRR = Instant.now();
+
             testAttributeName(adapters.get(key), key);
             testAttributeValue(adapters.get(key), key, new AttributeBuilder().setValue("true").setType(AttributeType.String).createAttribute());
             testChanges(adapters.get(key), key);
 
+            Instant endRR = Instant.now();
+            log.info("********************** Finished real run **********************");
+            log.info("Duration: {}", Duration.between(startRR,endRR));
         }
 
         Instant endPt = Instant.now();
