@@ -55,6 +55,14 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             dbContext = "postgres";
         }
         this.conn = connectionManager.getConnection();
+
+        try {
+            conn.setAutoCommit(false);
+        } catch (SQLException e){
+            log.error("Could not set autocommit to false, terminating...");
+            throw new RuntimeException("Could not set Autocommit to false...", e);
+        }
+
     }
 
     @Override
@@ -73,6 +81,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             Instant startU = Instant.now();
 
             int updatedRows = st.executeUpdate();
+            conn.commit();
 
             Instant endU = Instant.now();
             log.info("@@ Finished Creation of page, EAV SQL, duration: {}ms", Duration.between(startU,endU).toMillis());
@@ -139,6 +148,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             Instant start = Instant.now();
 
             int affectedRows = st.executeUpdate();
+            conn.commit();
 
             Instant end = Instant.now();
             log.info("@@ Finished deleting page, EAV SQL, duration: {}ms", Duration.between(start,end).toMillis());
@@ -158,7 +168,6 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         PreparedStatement st = null;
 
         try {
-            conn.setAutoCommit(false);
 
             //Check if dirty?
             st = conn.prepareStatement(UPDATE_PAGE_QUERY);
@@ -202,7 +211,6 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
 
             conn.commit();
         } finally {
-            conn.setAutoCommit(true);
             DbUtils.close(st);
         }
 
@@ -222,6 +230,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             Instant startRA = Instant.now();
 
             ps.executeUpdate();
+            conn.commit();
 
             Instant endRA = Instant.now();
             log.info("@@ Finished removing attribute value, EAV SQL, duration: {}ms", Duration.between(startRA,endRA).toMillis());
@@ -435,6 +444,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         try {
             stFindPagesByAttribute = conn.prepareStatement(FIND_PAGE_BY_TYPE_QUERY);
             stFindPagesByAttribute.setString(1, type);
+            stFindPagesByAttribute.setFetchSize(100);
 
             log.info("@@ Started finding pages by type, EAV SQL");
             Instant startQT = Instant.now();
@@ -472,6 +482,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         try {
             stFindPagesByAttribute = conn.prepareStatement(FIND_PAGE_BY_ATTRIBUTE_QUERY);
             stFindPagesByAttribute.setString(1, attributeName);
+            stFindPagesByAttribute.setFetchSize(100);
 
             log.info("@@ Started finding pages by attribute name, EAV SQL");
             Instant startQN = Instant.now();
@@ -526,6 +537,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             stFindPagesByAttributeValue = conn.prepareStatement(dbDependentQuery);
             stFindPagesByAttributeValue.setString(1, attributeName);
             stFindPagesByAttributeValue.setString(2, value.getValue().toString());
+            stFindPagesByAttributeValue.setFetchSize(100);
 
             log.info("@@ Started finding by attribute value, EAV SQL");
             Instant startQV = Instant.now();
