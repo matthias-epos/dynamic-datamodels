@@ -38,6 +38,13 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
     public JSON_Postgres_DatabaseAdapter(AbstractConnectionManager connectionManager) {
         this.conn = connectionManager.getConnection();
 
+        try {
+            conn.setAutoCommit(false);
+        } catch (SQLException e){
+            log.error("Could not set autocommit to false, terminating...");
+            throw new RuntimeException("Could not set Autocommit to false...", e);
+        }
+
         GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(attributeType, new AttributesSerializer());
         builder.registerTypeAdapter(attributeType, new AttributesDeserializer());
@@ -68,6 +75,7 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
             Instant startCP = Instant.now();
 
             int affectedRows = stCreatePage.executeUpdate();
+            conn.commit();
 
             Instant endCP = Instant.now();
             log.info("@@ Finished creating page, PostgreSQL JSON SQL, duration: {}ms", Duration.between(startCP,endCP).toMillis());
@@ -115,6 +123,7 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
             Instant startDP = Instant.now();
 
             int affectedRows = st.executeUpdate();
+            conn.commit();
 
             Instant endDP = Instant.now();
             log.info("@@ Finished deleting page, PostgreSQL JSON SQL, duration: {}ms", Duration.between(startDP,endDP).toMillis());
@@ -143,6 +152,7 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
             Instant startUP = Instant.now();
 
             int affectedRows = stUpdatePage.executeUpdate();
+            conn.commit();
 
             Instant endUP = Instant.now();
             log.info("@@ Finished updating page, PostgreSQL JSON SQL, duration: {}ms", Duration.between(startUP,endUP).toMillis());
@@ -199,6 +209,7 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
         try {
             stFindByType = conn.prepareStatement("SELECT * FROM pages WHERE type = ?");
             stFindByType.setString(1,type);
+            stFindByType.setFetchSize(100);
 
             log.info("@@ Started finding page by type, PostgreSQL JSON SQL");
             Instant startQPT = Instant.now();
@@ -243,6 +254,8 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
 
             stFindByAttribute = conn.prepareStatement("SELECT * FROM pages WHERE attributes::jsonb @> ?::jsonb");
             stFindByAttribute.setString(1, gson.toJson(jsonArray));
+            stFindByAttribute.setFetchSize(100);
+
 
             log.info("@@ Started finding page by attribute name, PostgreSQL JSON SQL");
             Instant startQAN = Instant.now();
@@ -301,6 +314,7 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
         try {
             stFindByAttributeValue = conn.prepareStatement("SELECT * FROM pages WHERE attributes::jsonb @> ?::jsonb");
             stFindByAttributeValue.setObject(1, gson.toJson(jsonArray));
+            stFindByAttributeValue.setFetchSize(100);
 
             log.info("@@ Started finding pages by attribute vale, PostgreSQL JSON SQL");
             Instant startQAV = Instant.now();
