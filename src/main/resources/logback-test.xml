@@ -13,28 +13,28 @@
         </encoder>
     </appender>
 
-    <appender name="SQL-to-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/sql.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>logs/sql-%d{yyy-MM-dd}.%i.log</fileNamePattern>
-            <maxFileSize>100MB</maxFileSize>
-            <maxHistory>60</maxHistory>
-            <totalSizeCap>5GB</totalSizeCap>
-        </rollingPolicy>
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n</pattern>
-        </encoder>
-    </appender>
+    <!--    <appender name="SQL-to-file" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
+    <!--        <file>logs/sql.log</file>-->
+    <!--        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">-->
+    <!--            <fileNamePattern>logs/sql-%d{yyy-MM-dd}.%i.log</fileNamePattern>-->
+    <!--            <maxFileSize>100MB</maxFileSize>-->
+    <!--            <maxHistory>60</maxHistory>-->
+    <!--            <totalSizeCap>5GB</totalSizeCap>-->
+    <!--        </rollingPolicy>-->
+    <!--        <encoder>-->
+    <!--            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n</pattern>-->
+    <!--        </encoder>-->
+    <!--    </appender>-->
 
-    <logger name="de.eposcat.master.approachImpl" additivity="false">
-        <appender-ref ref="SQL-to-file"/>
+    <logger name="de.eposcat.master.approachImpl" additivity="false" level="warn">
+        <!--        <appender-ref ref="SQL-to-file"/>-->
         <appender-ref ref="last-run"/>
     </logger>
 
     <root level="info">
         <appender-ref ref="STDOUT"/>
-        <appender-ref ref="SQL-to-file"/>
-        <appender-ref ref="last-run"/>
+        <!--        <appender-ref ref="SQL-to-file"/>-->
+        <!--        <appender-ref ref="last-run"/>-->
     </root>
 
     <logger name="org.testcontainers" level="INFO"/>

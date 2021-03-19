@@ -70,10 +70,8 @@ public class StartDataGenerator {
                 }
             }
 
-            if(i % (numberOfStartEntities / 100f) == 0){
-                log.info("%%%");
-                log.info("Progress: {}", i / (float) numberOfStartEntities);
-                log.info("%%%");
+            if (i % (numberOfStartEntities / 100f) == 0) {
+                log.info("% Progress: {}", i / (float) numberOfStartEntities);
             }
         }
     }
