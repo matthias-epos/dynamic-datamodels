@@ -20,7 +20,7 @@ public class AttributeBuilder {
     }
 
     public AttributeBuilder setId(long attributeId) {
-        if(attributeId == -1){
+        if (attributeId == -1) {
             throw new IllegalArgumentException();
         }
 

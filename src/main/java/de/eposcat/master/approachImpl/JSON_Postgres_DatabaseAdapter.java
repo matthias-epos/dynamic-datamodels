@@ -6,14 +6,19 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gson.*;
+import org.apache.commons.dbutils.DbUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 import de.eposcat.master.connection.AbstractConnectionManager;
@@ -22,21 +27,19 @@ import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.Page;
 import de.eposcat.master.serializer.AttributesDeserializer;
 import de.eposcat.master.serializer.AttributesSerializer;
-import org.apache.commons.dbutils.DbUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
 
-    private final Connection conn;
-    private final Gson gson;
-    private final Type attributeType = new TypeToken<Map<String, Attribute>>() {}.getType();
-
     private static final Logger log = LoggerFactory.getLogger(JSON_Postgres_DatabaseAdapter.class);
 
+    private final Connection conn;
+    private final Gson gson;
+    private final Type attributeType = new TypeToken<Map<String, Attribute>>() {
+    }.getType();
+
     public JSON_Postgres_DatabaseAdapter(AbstractConnectionManager connectionManager) {
-        this.conn = connectionManager.getConnection();
+        conn = connectionManager.getConnection();
 
         try {
             conn.setAutoCommit(false);
@@ -57,8 +60,8 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     @Override
-    public Page createPageWithAttributes(String typename, Map<String, Attribute> attributes) throws SQLException{
-        if(typename == null || typename.isEmpty() || attributes == null){
+    public Page createPageWithAttributes(String typename, Map<String, Attribute> attributes) throws SQLException {
+        if (typename == null || typename.isEmpty() || attributes == null) {
             throw new IllegalArgumentException();
         }
 
@@ -95,21 +98,19 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
             DbUtils.close(stCreatePage);
             DbUtils.close(key);
         }
-
-
     }
 
     @Override
-    public boolean deletePage(long pageId) throws SQLException{
-        if(pageId == -1){
+    public boolean deletePage(long pageId) throws SQLException {
+        if (pageId == -1) {
             return false;
         }
 
         return deletePage(loadPage(pageId));
     }
 
-    public boolean deletePage(Page page) throws SQLException{
-        if(page == null || page.getId() == -1){
+    public boolean deletePage(Page page) throws SQLException {
+        if (page == null || page.getId() == -1) {
             return false;
         }
 
@@ -137,7 +138,7 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
 
     @Override
     public void updatePage(Page page) throws SQLException {
-        if(page == null){
+        if (page == null) {
             throw new IllegalArgumentException("page must not be null");
         }
 
@@ -199,7 +200,7 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
 
     @Override
     public List<Page> findPagesByType(String type) throws SQLException {
-        if(type == null || type.isEmpty()){
+        if (type == null || type.isEmpty()) {
             throw new IllegalArgumentException();
         }
 
@@ -242,7 +243,7 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
 
     @Override
     public List<Page> findPagesByAttributeName(String attributeName) throws SQLException {
-        if(attributeName == null){
+        if (attributeName == null) {
             throw new IllegalArgumentException();
         }
 
@@ -282,13 +283,12 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
         }
     }
 
-
     private JsonArray getAttributeArray(String attributeName, Attribute attribute) {
         JsonObject nameHelper = new JsonObject();
         nameHelper.addProperty("name", attributeName);
 
-        if(attribute != null){
-            JsonArray values =  new JsonArray();
+        if (attribute != null) {
+            JsonArray values = new JsonArray();
             JsonObject valueObject = new JsonObject();
             valueObject.addProperty(attribute.getType().toString(), attribute.getValue().toString());
             values.add(valueObject);
@@ -302,7 +302,7 @@ public class JSON_Postgres_DatabaseAdapter implements IDatabaseAdapter {
 
     @Override
     public List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException {
-        if(attributeName == null){
+        if (attributeName == null) {
             throw new IllegalArgumentException();
         }
 

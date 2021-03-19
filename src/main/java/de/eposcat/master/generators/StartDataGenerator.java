@@ -1,18 +1,23 @@
 package de.eposcat.master.generators;
 
+import java.sql.SQLException;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.List;
+import java.util.Random;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.eposcat.master.approachImpl.IDatabaseAdapter;
 import de.eposcat.master.generators.data.FillerAttributesStats;
 import de.eposcat.master.generators.data.PerformanceTestAttribute;
-import de.eposcat.master.generators.data.StartData;
 import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.AttributeBuilder;
 import de.eposcat.master.model.AttributeType;
 import de.eposcat.master.model.Page;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.sql.SQLException;
-import java.util.*;
 
 public class StartDataGenerator {
     private final Random random;
@@ -24,19 +29,24 @@ public class StartDataGenerator {
     }
 
     /**
-     *
      * @param numberOfStartEntities number of entities that should be created
-     * @param stats data for 'filler' attributes which have random names/values to create a good realistic environment for testing
-     * @param perfAttributes list of certain attributes with certain names and values which will be used as query parameters
+     * @param stats                 data for 'filler' attributes which have random names/values to create a good realistic environment for testing
+     * @param perfAttributes        list of certain attributes with certain names and values which will be used as query parameters
      * @param emptyDatabases
      * @return a StartData object containing the names of the created entities and attributes and all generated page objects.
-     *          The page objects must be added to the database manually.
+     * The page objects must be added to the database manually.
      */
-    public void generateStartData(int numberOfStartEntities, FillerAttributesStats stats, List<PerformanceTestAttribute> perfAttributes, List<IDatabaseAdapter> emptyDatabases) {
+    public void generateStartData(int numberOfStartEntities, FillerAttributesStats stats,
+                                  List<PerformanceTestAttribute> perfAttributes,
+                                  List<IDatabaseAdapter> emptyDatabases) {
+        if (emptyDatabases.isEmpty()) {
+            log.info("All DBs contain already data. Skip generating test data.");
+            return;
+        }
         String[] attributeNames = new String[stats.getNumberOfStartAttributes()];
         fillWithRandomNames(attributeNames);
 
-        for (int i = 0; i<numberOfStartEntities;i++) {
+        for (int i = 0; i < numberOfStartEntities; i++) {
             Page page = new Page(getRandomEntityName());
 
             //Generate filler Attributes
@@ -52,7 +62,7 @@ public class StartDataGenerator {
             //Generate Performance Test Attributes (Fixed names, certain probabilities, certain values)
             addPerformanceAttributes(perfAttributes, page);
 
-            for(IDatabaseAdapter adapter : emptyDatabases){
+            for (IDatabaseAdapter adapter : emptyDatabases) {
                 try {
                     adapter.createPageWithAttributes(page.getTypeName(), page.getAttributes());
                 } catch (SQLException throwables) {

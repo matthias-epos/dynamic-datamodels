@@ -40,7 +40,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     private static final String REMOVE_PAGE_QUERY = "DELETE FROM entities WHERE id = ?";
 
     private final Connection conn;
-    private final static String ENTITY_TABLE =  "entityTable";
+    private final static String ENTITY_TABLE = "entityTable";
     private final static String ATTRIBUTE_TABLE = "attributeTable";
 
     private static final Logger log = LoggerFactory.getLogger(EAV_DatabaseAdapter.class);
@@ -49,9 +49,9 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     public EAV_DatabaseAdapter(AbstractConnectionManager connectionManager) {
 
         //really ugly, but comparing clobs in oracle needs a custom query....
-        if(connectionManager instanceof CustomOracleConnectionManager){
+        if (connectionManager instanceof CustomOracleConnectionManager) {
             dbContext = "oracle";
-        } else if(connectionManager instanceof PostgresConnectionManager){
+        } else if (connectionManager instanceof PostgresConnectionManager) {
             dbContext = "postgres";
         }
         this.conn = connectionManager.getConnection();
@@ -67,7 +67,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
 
     @Override
     public Page createPage(String typeName) throws SQLException {
-        if(typeName == null || typeName.isEmpty()){
+        if (typeName == null || typeName.isEmpty()) {
             throw new IllegalArgumentException("Typename has to be a non empty String");
         }
 
@@ -99,8 +99,8 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     @Override
-    public Page createPageWithAttributes(String typename, Map<String, Attribute> attributes) throws SQLException{
-        if(attributes == null){
+    public Page createPageWithAttributes(String typename, Map<String, Attribute> attributes) throws SQLException {
+        if (attributes == null) {
             throw new IllegalArgumentException("Argument map must not be null");
         }
 
@@ -113,16 +113,16 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     @Override
-    public boolean deletePage(long pageId) throws SQLException{
-        if(pageId == -1){
+    public boolean deletePage(long pageId) throws SQLException {
+        if (pageId == -1) {
             return false;
         }
 
         return deletePage(loadPage(pageId));
     }
 
-    public boolean deletePage(Page page) throws SQLException{
-        if(page == null || page.getId() == -1){
+    public boolean deletePage(Page page) throws SQLException {
+        if (page == null || page.getId() == -1) {
             return false;
         }
 
@@ -160,8 +160,8 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     @Override
-    public void updatePage(Page page) throws SQLException{
-        if(page == null){
+    public void updatePage(Page page) throws SQLException {
+        if (page == null) {
             throw new IllegalArgumentException("page must not be null");
         }
 
@@ -264,7 +264,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     private void createAttributeValue(long id, Attribute att) throws SQLException {
-        if(att.getId() == -1){
+        if (att.getId() == -1) {
             throw new IllegalArgumentException();
         }
 
@@ -292,7 +292,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         }
     }
 
-    private List<Long> getLastAttributeIds(long id) throws SQLException{
+    private List<Long> getLastAttributeIds(long id) throws SQLException {
         PreparedStatement selectAllAttributes = null;
         ResultSet rsAttributes = null;
 
@@ -303,7 +303,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
 
             List<Long> attributes = new ArrayList<>();
 
-            while(rsAttributes.next()) {
+            while (rsAttributes.next()) {
                 attributes.add(rsAttributes.getLong(1));
             }
 
@@ -314,18 +314,19 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         }
     }
 
-    private Attribute saveAttribute(String attributeName, Attribute attribute) throws SQLException{
-        if(attribute.getId() == -1) {
+    // compute the time and subtract it from the total time
+    private Attribute saveAttribute(String attributeName, Attribute attribute) throws SQLException { // should be cached
+        if (attribute.getId() == -1) {
             PreparedStatement psFindAttribute = null;
             ResultSet attributes = null;
 
             try {
                 psFindAttribute = conn.prepareStatement(FIND_ATTRIBUTE_QUERY);
-                psFindAttribute.setString(1, attribute.getType().toString());
+                psFindAttribute.setString(1, attribute.getType().toString()); // is the type needed? no
                 psFindAttribute.setString(2, attributeName);
                 attributes = psFindAttribute.executeQuery();
 
-                if(attributes.next()){
+                if (attributes.next()) {
                     long attributeId = attributes.getLong("id");
                     attribute = new AttributeBuilder().setId(attributeId).setType(attribute.getType()).setValue(attribute.getValue()).createAttribute();
                 } else {
@@ -344,7 +345,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
 
-    private Attribute createAttribute(String attributeName, String attributeType) throws SQLException{
+    private Attribute createAttribute(String attributeName, String attributeType) throws SQLException {
         PreparedStatement createAttributeDB = null;
         ResultSet keySet = null;
 
@@ -376,7 +377,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     @Override
-    public Page loadPage(long pageId) throws SQLException{
+    public Page loadPage(long pageId) throws SQLException {
         //load Page
         Page page;
 
@@ -434,7 +435,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
 
     @Override
     public List<Page> findPagesByType(String type) throws SQLException {
-        if(type == null || type.isEmpty()){
+        if (type == null || type.isEmpty()) {
             throw new IllegalArgumentException("Typename has to be a non empty String");
         }
 
@@ -471,8 +472,8 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
 
     //Add attributeType?
     @Override
-    public List<Page> findPagesByAttributeName(String attributeName) throws SQLException{
-        if(attributeName == null){
+    public List<Page> findPagesByAttributeName(String attributeName) throws SQLException {
+        if (attributeName == null) {
             throw new IllegalArgumentException("attributeName must not be null");
         }
 
@@ -510,16 +511,15 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     /**
-     *
      * @param attributeName the name of the attribute we are searching
-     * @param value the attribute including value we are searching, id and type are ignored in the EAV approach,
-     *              since attribute names are unique and every attribute has a certain type already saved in the db
+     * @param value         the attribute including value we are searching, id and type are ignored in the EAV approach,
+     *                      since attribute names are unique and every attribute has a certain type already saved in the db
      * @return a List of Page Objects which have the matching attribute
      * @throws SQLException
      */
     @Override
-    public List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException{
-        if(attributeName == null){
+    public List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException {
+        if (attributeName == null) {
             throw new IllegalArgumentException();
         }
 
@@ -529,7 +529,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         try {
             String dbDependentQuery = "";
 
-            if(dbContext.equals("oracle")){
+            if (dbContext.equals("oracle")) {
                 dbDependentQuery = ORACLE_FIND_PAGE_BY_ATTRIBUTE_VALUE_QUERY;
             } else {
                 dbDependentQuery = FIND_PAGE_BY_ATTRIBUTE_VALUE_QUERY;
