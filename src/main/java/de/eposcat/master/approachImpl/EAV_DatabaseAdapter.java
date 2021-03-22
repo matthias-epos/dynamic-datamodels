@@ -510,7 +510,6 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             stFindPagesByAttributeValue.setFetchSize(100);
 
             log.info("@@ Started finding by attribute value, EAV SQL");
-            Instant startQV = Instant.now();
 
             long startTime = System.currentTimeMillis();
             rsPages = stFindPagesByAttributeValue.executeQuery();
