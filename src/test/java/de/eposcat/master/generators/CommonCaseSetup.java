@@ -1,23 +1,5 @@
 package de.eposcat.master.generators;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.fail;
-
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.shaded.com.google.common.collect.Lists;
-
 import ch.qos.logback.classic.Level;
 import de.eposcat.master.approachImpl.IDatabaseAdapter;
 import de.eposcat.master.generators.data.FillerAttributesStats;
@@ -26,6 +8,19 @@ import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.AttributeBuilder;
 import de.eposcat.master.model.AttributeType;
 import de.eposcat.master.model.Page;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.shaded.com.google.common.collect.Lists;
+
+import java.sql.SQLException;
+import java.util.*;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * The databases of this class gets filled with data when first run and then will be reused for the tests
@@ -94,6 +89,9 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup {
                     log.info("Warm-up is done. Lets do this!!!");
                 }
                 testChanges(ADAPTERS_MAP.get(approachName), approachName);
+                testAttributeNameQuery(ADAPTERS_MAP.get(approachName), approachName);
+                testAttributeValue(ADAPTERS_MAP.get(approachName), approachName, new AttributeBuilder().setValue("true").setType(AttributeType.String).createAttribute());
+                changeSingleBigAttributeTest(ADAPTERS_MAP.get(approachName), approachName);
             }
         }
     }
@@ -143,6 +141,92 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup {
         }
     }
 
+    public void testAttributeNameQuery(IDatabaseAdapter dbAdapter, String dbName) {
+        long startTime;
+        long endTime;
+
+        try {
+            startTime = System.currentTimeMillis();
+            dbAdapter.findPagesByAttributeName("fiftyPercent");
+            endTime = System.currentTimeMillis();
+            log.info("Finished finding 100 pages with with attribute 'fiftyPercent', duration: {} ms", endTime - startTime);
+
+
+        } catch (SQLException e) {
+            log.error("Failed to execute changes");
+            log.error(e.getMessage());
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    public void testAttributeValue(IDatabaseAdapter dbAdapter, String approach, Attribute value) {
+        log.info("Starting Attribute Value Lookup, database/approach: {}", approach);
+
+        long startTime;
+        long endTime;
+
+        try {
+
+            startTime = System.currentTimeMillis();
+            dbAdapter.findPagesByAttributeValue("fiftyPercent", value);
+            endTime = System.currentTimeMillis();
+
+            log.info("Finished finding 100 pages with with attribute 'fiftyPercent' and value {}, duration: {} ms", value, endTime - startTime);
+        } catch (SQLException e) {
+            log.error("Failed to execute changes");
+            log.error(e.getMessage());
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    public void changeSingleBigAttributeTest(IDatabaseAdapter adapter, String approach) {
+        log.info("Testing running attribute changes, approach: {}", approach);
+        Random randomGen = new Random();
+        long startTime;
+        long endTime;
+        try {
+            startTime = System.currentTimeMillis();
+            Page page = adapter.createPage("bigAttributeChangeTestPage");
+            endTime = System.currentTimeMillis();
+            log.debug("Finished creating big empty test page, duration: {} ms", endTime - startTime);
+
+            Map<String, Attribute> newAttributes = new HashMap<>();
+            for (int i = 0; i < MEAN_NUMBER_OF_ATTRIBUTES; i++) {
+                newAttributes.put(randomAttributeName(randomGen), randomAttributeValue(randomGen));
+            }
+            newAttributes.put("bigAttribute", new AttributeBuilder().setValue(generateBigString(1000)).setType(AttributeType.String).createAttribute());
+            page.setAttributes(newAttributes);
+
+            startTime = System.currentTimeMillis();
+            adapter.updatePage(page);
+            endTime = System.currentTimeMillis();
+            log.debug("Finished saving {} attributes, including big attribute, duration: {} ms", MEAN_NUMBER_OF_ATTRIBUTES + 1, endTime - startTime);
+
+            //change big attribute(concat)
+
+            Attribute bigAttribute = page.getAttribute("bigAttribute");
+            bigAttribute.setValue(bigAttribute.getValue() + "concatString");
+            page.addAttribute("bigAttribute", bigAttribute);
+
+            startTime = System.currentTimeMillis();
+            adapter.updatePage(page);
+            endTime = System.currentTimeMillis();
+            log.info("++Finished changing big attribute value, approach: {}, duration: {} ms", approach, endTime - startTime);
+
+            startTime = System.currentTimeMillis();
+            adapter.deletePage(page.getId());
+            endTime = System.currentTimeMillis();
+            log.debug("Finished deleting the test page, duration: {} ms", endTime - startTime);
+        } catch (SQLException e) {
+            log.error("Failed to execute changes");
+            log.error(e.getMessage());
+            e.printStackTrace();
+            fail();
+        }
+    }
+
     private Attribute randomAttributeValue(Random randomGen) {
         return new AttributeBuilder().setType(AttributeType.String).setValue(randomGen.nextInt(400)).createAttribute();
     }
@@ -150,6 +234,12 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup {
     private String randomAttributeName(Random randomGen) {
         StartDataGenerator stg = new StartDataGenerator(randomGen.nextInt());
         return stg.getRandomEntityName();
+    }
+
+    private static String generateBigString(int sizeInKB) {
+        byte[] bytes = new byte[sizeInKB * 1000];
+        RANDOM_GEN.nextBytes(bytes);
+        return Arrays.toString(bytes);
     }
 
 }
