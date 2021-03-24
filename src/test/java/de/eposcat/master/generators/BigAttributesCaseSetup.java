@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
+import ch.qos.logback.classic.Level;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -33,6 +34,10 @@ import de.eposcat.master.model.Page;
  * !!!!!!!
  * <p>
  * This class should not be run as part of the Unit and Integration Tests
+ *
+ * <p>
+ * Compared to the SingleBigAttribute testcase in the common case setup this class tests a setup with multiple entities with big attributes
+ * We can compare the results of both classes to guess the implications of multiple cases of big attributes in the database.
  */
 @Testcontainers
 public class BigAttributesCaseSetup extends PerformanceTestContainerStartup {
@@ -50,16 +55,33 @@ public class BigAttributesCaseSetup extends PerformanceTestContainerStartup {
     );
 
     @BeforeAll
-    static void setupData() {
+    static void setupData() throws SQLException {
+        POSTGRES.start();
         assertThat(POSTGRES.isRunning(), is(true));
         log.info("Postgres container is running. Generating initial data for JSON and EAV approach.");
 
         initAdapters();
+
+        // generate test data only for empty DBs
+        List<IDatabaseAdapter> emptyDbs = Lists.newArrayList();
+        for (String approach : ADAPTERS_MAP.keySet()) {
+            IDatabaseAdapter dbAdapter = ADAPTERS_MAP.get(approach);
+            List<Page> pages = dbAdapter.findPagesByAttributeName(QUERY_ATTRIBUTES.get(0).getAttributeName());
+            if (pages.isEmpty()) {
+                emptyDbs.add(dbAdapter);
+            }
+        }
+
         StartDataGenerator startDataGenerator = new StartDataGenerator(RNG_SEED);
         FillerAttributesStats filler = new FillerAttributesStats(NUMBER_OF_START_ATTRIBUTES, MEAN_NUMBER_OF_ATTRIBUTES, MAX_NUMBER_OF_ATTRIBUTES);
-        startDataGenerator.generateStartData(NUMBER_OF_START_ENTITIES, filler, QUERY_ATTRIBUTES, Lists.newArrayList(ADAPTERS_MAP.values()));
+        startDataGenerator.generateStartData(NUMBER_OF_START_ENTITIES, filler, QUERY_ATTRIBUTES, emptyDbs);
 
-        log.info("Finished generating start data.");
+        log.info("Finished generating start data for empty DBs: {}, with params entitiesNum: {}, maxAttrNum: {}, startAttrNum: {}, meanAttrNum: {}",
+                emptyDbs,
+                NUMBER_OF_START_ENTITIES, MAX_NUMBER_OF_ATTRIBUTES,
+                NUMBER_OF_START_ATTRIBUTES, MEAN_NUMBER_OF_ATTRIBUTES);
+
+        ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("de.eposcat.master.approachImpl")).setLevel(Level.INFO);
     }
 
     @Test
