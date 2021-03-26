@@ -9,18 +9,18 @@ public class Page {
     //TODO make typeName mandatory
     private String typeName;
     private Map<String, Attribute> attributes;
-    
+
     private Page() {
         id = -1;
         attributes = new HashMap<>();
     }
-    
+
     public Page(String typeName) {
         this();
-        
+
         this.typeName = typeName;
     }
-    
+
     public Page(long id, String typeName) {
         this.attributes = new HashMap<>();
         this.id = id;
@@ -31,12 +31,12 @@ public class Page {
         return id;
     }
 
-    
+
     public String getTypeName() {
         return typeName;
     }
 
-    
+
     public void setAttributes(Map<String, Attribute> attributes) {
         this.attributes = attributes;
     }
@@ -48,24 +48,24 @@ public class Page {
     public Attribute getAttribute(String attributeName) {
         return attributes.get(attributeName);
     }
-    
+
     public void removeAttribute(String name) {
         attributes.remove(name);
     }
-    
+
     public Map<String, Attribute> getAttributes() {
         return attributes;
     }
-    
+
     @Override
     public String toString() {
         StringBuilder pageString = new StringBuilder("Page #" + id);
         pageString.append("\n Type: ").append(typeName);
-        for(String attributeName: attributes.keySet()) {
+        for (String attributeName : attributes.keySet()) {
             pageString.append("\n").append(attributeName);
             pageString.append(": ").append(attributes.get(attributeName).getValue());
         }
-        
+
         return pageString.toString();
     }
 

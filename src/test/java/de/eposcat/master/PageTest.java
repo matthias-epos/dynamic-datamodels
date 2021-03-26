@@ -172,8 +172,8 @@ public class PageTest {
             assertNull(dbAdapter.loadPage(page.getId()));
         } catch (SQLException exception
         ) {
-            fail();
             exception.printStackTrace();
+            fail();
         }
     }
 
@@ -184,8 +184,8 @@ public class PageTest {
             assertThat(dbAdapter.deletePage(9999999), is(false));
         } catch (SQLException exception
         ) {
-            fail();
             exception.printStackTrace();
+            fail();
         }
     }
 
@@ -199,8 +199,8 @@ public class PageTest {
             assertThat(page.getAttribute("singleAttribute").getValue(), is("test"));
         } catch (SQLException exception
         ) {
-            fail();
             exception.printStackTrace();
+            fail();
         }
     }
 
@@ -231,8 +231,8 @@ public class PageTest {
             dbAdapter.updatePage(page);
 
         } catch (SQLException e) {
-            fail("No test should ever throw a SQL exception");
             e.printStackTrace();
+            fail("No test should ever throw a SQL exception");
         }
     }
 
@@ -253,8 +253,8 @@ public class PageTest {
 
             addedPages.add(page.getId());
         } catch (SQLException e) {
-            fail();
             e.printStackTrace();
+            fail();
         }
     }
 

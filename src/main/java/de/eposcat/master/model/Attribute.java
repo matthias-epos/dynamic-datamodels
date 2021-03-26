@@ -6,7 +6,7 @@ public class Attribute {
     private transient long id;
     private AttributeType type;
     private Object value;
-    
+
     private Attribute() {
         this.id = -1;
     }
@@ -27,21 +27,21 @@ public class Attribute {
     public AttributeType getType() {
         return type;
     }
-    
+
     public void setType(AttributeType type) {
         this.type = type;
     }
-    
+
     public Object getValue() {
         return value;
     }
-    
+
     public void setValue(Object value) {
         this.value = value;
     }
-    
+
     public long getId() {
         return id;
     }
-    
+
 }

@@ -3,11 +3,11 @@ package de.eposcat.master.approachImpl;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+
 import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.Page;
 
 public interface IDatabaseAdapter {
-    static final int defaultPageSize = 100;
 
     /**
      * Creates a new page entry in the database and returns the representing page object.
@@ -23,7 +23,7 @@ public interface IDatabaseAdapter {
      * Creates a new page entry in the database and returns the representing page object.
      * This method simultaneously persists the given attributes of this page.
      *
-     * @param typename the type of the new page
+     * @param typename   the type of the new page
      * @param attributes the attributes of the new page
      * @return a new page with a database-generated id and the given attributes
      * @throws SQLException if the implementation or database connection are malfunctioning
@@ -38,7 +38,7 @@ public interface IDatabaseAdapter {
      * Acts similar to Hibernate's flush method, but we need to keep track of the objects ourself.
      *
      * @param page the page which database representation should be updated/persisted
-     * @throws SQLException if the implementation or database connection are malfunctioning
+     * @throws SQLException                             if the implementation or database connection are malfunctioning
      * @throws de.eposcat.master.exceptions.BlException - if no entry with the same id as the page exists in the database
      */
     void updatePage(Page page) throws SQLException;
@@ -55,6 +55,7 @@ public interface IDatabaseAdapter {
 
     /**
      * Returns all pages with matching type names.
+     *
      * @param type the name of the type of pages we are searching
      * @return a List of matching pages
      * @throws SQLException if the implementation or database connection are malfunctioning
@@ -74,13 +75,13 @@ public interface IDatabaseAdapter {
      * Returns all pages which have an attribute with the given name and value.
      *
      * @param attributeName the name of the attribute we are searching
-     * @param value the attribute including type and value we are searching, id is ignored
+     * @param value         the attribute including type and value we are searching, id is ignored
      * @return a List of matching pages
      * @throws SQLException if the implementation or database connection are malfunctioning
      */
     List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException;
 
-    default int getQueryPageSize(){
-        return defaultPageSize;
+    default int getQueryPageSize() {
+        return 100;
     }
 }

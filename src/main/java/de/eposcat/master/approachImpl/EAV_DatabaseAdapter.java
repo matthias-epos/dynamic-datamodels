@@ -1,5 +1,19 @@
 package de.eposcat.master.approachImpl;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.dbutils.DbUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.eposcat.master.connection.AbstractConnectionManager;
 import de.eposcat.master.connection.CustomOracleConnectionManager;
 import de.eposcat.master.connection.PostgresConnectionManager;
@@ -8,17 +22,6 @@ import de.eposcat.master.model.Attribute;
 import de.eposcat.master.model.AttributeBuilder;
 import de.eposcat.master.model.AttributeType;
 import de.eposcat.master.model.Page;
-import org.apache.commons.dbutils.DbUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.sql.*;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 
 public class EAV_DatabaseAdapter implements IDatabaseAdapter {
@@ -40,7 +43,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     private static final String REMOVE_PAGE_QUERY = "DELETE FROM entities WHERE id = ?";
 
     private final Connection conn;
-    private final static String ENTITY_TABLE =  "entityTable";
+    private final static String ENTITY_TABLE = "entityTable";
     private final static String ATTRIBUTE_TABLE = "attributeTable";
 
     private static final Logger log = LoggerFactory.getLogger(EAV_DatabaseAdapter.class);
@@ -49,17 +52,25 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     public EAV_DatabaseAdapter(AbstractConnectionManager connectionManager) {
 
         //really ugly, but comparing clobs in oracle needs a custom query....
-        if(connectionManager instanceof CustomOracleConnectionManager){
+        if (connectionManager instanceof CustomOracleConnectionManager) {
             dbContext = "oracle";
-        } else if(connectionManager instanceof PostgresConnectionManager){
+        } else if (connectionManager instanceof PostgresConnectionManager) {
             dbContext = "postgres";
         }
         this.conn = connectionManager.getConnection();
+
+        try {
+            conn.setAutoCommit(false);
+        } catch (SQLException e){
+            log.error("Could not set autocommit to false, terminating...");
+            throw new RuntimeException("Could not set Autocommit to false...", e);
+        }
+
     }
 
     @Override
     public Page createPage(String typeName) throws SQLException {
-        if(typeName == null || typeName.isEmpty()){
+        if (typeName == null || typeName.isEmpty()) {
             throw new IllegalArgumentException("Typename has to be a non empty String");
         }
 
@@ -69,13 +80,11 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             st = conn.prepareStatement(CREATE_PAGE_QUERY, Statement.RETURN_GENERATED_KEYS);
             st.setString(1, typeName);
 
-            log.info("@@ Started Creation of page, EAV SQL");
-            Instant startU = Instant.now();
-
+            long startTime = System.currentTimeMillis();
             int updatedRows = st.executeUpdate();
-
-            Instant endU = Instant.now();
-            log.info("@@ Finished Creation of page, EAV SQL, duration: {}ms", Duration.between(startU,endU).toMillis());
+            conn.commit();
+            long endTime = System.currentTimeMillis();
+            log.debug("@@ Finished Creation of page, EAV SQL, duration: {} ms", endTime - startTime);
 
             if (updatedRows > 0) {
                 //TODO? Cancel Transaction if getting generated keys fails?
@@ -90,8 +99,8 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     @Override
-    public Page createPageWithAttributes(String typename, Map<String, Attribute> attributes) throws SQLException{
-        if(attributes == null){
+    public Page createPageWithAttributes(String typename, Map<String, Attribute> attributes) throws SQLException {
+        if (attributes == null) {
             throw new IllegalArgumentException("Argument map must not be null");
         }
 
@@ -104,16 +113,16 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     @Override
-    public boolean deletePage(long pageId) throws SQLException{
-        if(pageId == -1){
+    public boolean deletePage(long pageId) throws SQLException {
+        if (pageId == -1) {
             return false;
         }
 
         return deletePage(loadPage(pageId));
     }
 
-    public boolean deletePage(Page page) throws SQLException{
-        if(page == null || page.getId() == -1){
+    public boolean deletePage(Page page) throws SQLException {
+        if (page == null || page.getId() == -1) {
             return false;
         }
 
@@ -135,13 +144,11 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             st = conn.prepareStatement(REMOVE_PAGE_QUERY);
             st.setLong(1, page.getId());
 
-            log.info("@@ Started deleting page, EAV SQL");
-            Instant start = Instant.now();
-
+            long startTime = System.currentTimeMillis();
             int affectedRows = st.executeUpdate();
-
-            Instant end = Instant.now();
-            log.info("@@ Finished deleting page, EAV SQL, duration: {}ms", Duration.between(start,end).toMillis());
+            conn.commit();
+            long endTime = System.currentTimeMillis();
+            log.debug("@@ Finished deleting page, EAV SQL, duration: {}ms", endTime - startTime);
 
             return (affectedRows > 0);
         } finally {
@@ -150,31 +157,27 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     @Override
-    public void updatePage(Page page) throws SQLException{
-        if(page == null){
+    public void updatePage(Page page) throws SQLException {
+        if (page == null) {
             throw new IllegalArgumentException("page must not be null");
         }
 
         PreparedStatement st = null;
 
         try {
-            conn.setAutoCommit(false);
 
             //Check if dirty?
             st = conn.prepareStatement(UPDATE_PAGE_QUERY);
             st.setString(1, page.getTypeName());
             st.setLong(2, page.getId());
 
-            log.info("@@ Started saving page entity, EAV SQL");
-            Instant startSe = Instant.now();
-
+            long startTime = System.currentTimeMillis();
             int affectedRows = st.executeUpdate();
+            long endTime = System.currentTimeMillis();
+            log.debug("@@ Finished saving page entity, EAV SQL, duration: {} ms", endTime - startTime);
 
-            Instant endSe = Instant.now();
-            log.info("@@ Finished saving page entity, EAV SQL, duration: {}ms", Duration.between(startSe,endSe).toMillis());
-
-            if(affectedRows != 1) {
-                throw new BlException("Page with id= "+ page.getId()+", type= " + page.getTypeName()+" is not tracked by database, try create pageWithAttributes first");
+            if (affectedRows != 1) {
+                throw new BlException("Page with id= " + page.getId() + ", type= " + page.getTypeName() + " is not tracked by database, try create pageWithAttributes first");
             }
 
             HashMap<String, Attribute> persistedAttributesWithIds = new HashMap<>();
@@ -184,11 +187,12 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
 
             page.setAttributes(persistedAttributesWithIds);
 
+            // the interesting measure
+            startTime = System.currentTimeMillis();
             final List<Long> currentAttributes = getLastAttributeIds(page.getId());
-
-            for(Attribute att : page.getAttributes().values()){
+            for (Attribute att : page.getAttributes().values()) {
                 long attId = att.getId();
-                if(currentAttributes.contains(attId)) {
+                if (currentAttributes.contains(attId)) {
                     currentAttributes.remove(attId);
                     updateAttributeValue(page.getId(), att);
                 } else {
@@ -196,19 +200,21 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
                 }
             }
 
-            for(long id : currentAttributes){
+            for (long id : currentAttributes) {
                 removeAttributeValue(page.getId(), id);
             }
 
             conn.commit();
+            endTime = System.currentTimeMillis();
+            log.info("+++ Finished updating page, EAV SQL, duration: {} ms", endTime - startTime);
+
         } finally {
-            conn.setAutoCommit(true);
             DbUtils.close(st);
         }
 
     }
 
-    private void removeAttributeValue(long id, Long attId) throws SQLException{
+    private void removeAttributeValue(long id, Long attId) throws SQLException {
 
         PreparedStatement ps = null;
 
@@ -218,20 +224,18 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             ps.setLong(1, id);
             ps.setLong(2, attId);
 
-            log.info("@@ Started removing attribute value, EAV SQL");
-            Instant startRA = Instant.now();
-
+            long startTime = System.currentTimeMillis();
             ps.executeUpdate();
-
-            Instant endRA = Instant.now();
-            log.info("@@ Finished removing attribute value, EAV SQL, duration: {}ms", Duration.between(startRA,endRA).toMillis());
+            conn.commit();
+            long endTime = System.currentTimeMillis();
+            log.debug("@@ Finished removing attribute value, EAV SQL, duration: {} ms", endTime - startTime);
         } finally {
             DbUtils.close(ps);
         }
 
     }
 
-    private void updateAttributeValue(long id, Attribute att) throws SQLException{
+    private void updateAttributeValue(long id, Attribute att) throws SQLException {
         PreparedStatement ps = null;
 
         try {
@@ -241,13 +245,10 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             ps.setLong(2, id);
             ps.setLong(3, att.getId());
 
-            log.info("@@ Started updating attribute value, EAV SQL");
-            Instant startUAV = Instant.now();
-
+            long startTime = System.currentTimeMillis();
             ps.executeUpdate();
-
-            Instant endUAV = Instant.now();
-            log.info("@@ Finished updating attribute value, EAV SQL, duration: {}ms", Duration.between(startUAV,endUAV).toMillis());
+            long endTime = System.currentTimeMillis();
+            log.debug("@@ Finished updating attribute value, EAV SQL, duration: {} ms", endTime - startTime);
         } finally {
             DbUtils.close(ps);
         }
@@ -255,7 +256,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     private void createAttributeValue(long id, Attribute att) throws SQLException {
-        if(att.getId() == -1){
+        if (att.getId() == -1) {
             throw new IllegalArgumentException();
         }
 
@@ -267,15 +268,12 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             ps.setLong(2, att.getId());
             ps.setString(3, att.getValue().toString());
 
-            log.info("@@ Started creating attribute value, EAV SQL");
-            Instant startCAV = Instant.now();
-
+            long startTime = System.currentTimeMillis();
             int affectedRows = ps.executeUpdate();
+            long endTime = System.currentTimeMillis();
+            log.debug("@@ Finished creating attribute value, EAV SQL, duration: {}ms", endTime - startTime);
 
-            Instant endCAV = Instant.now();
-            log.info("@@ Finished creating attribute value, EAV SQL, duration: {}ms", Duration.between(startCAV,endCAV).toMillis());
-
-            if(affectedRows == 0){
+            if (affectedRows == 0) {
                 throw new RuntimeException("Did not create Attribute Value!!");
             }
         } finally {
@@ -283,7 +281,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         }
     }
 
-    private List<Long> getLastAttributeIds(long id) throws SQLException{
+    private List<Long> getLastAttributeIds(long id) throws SQLException {
         PreparedStatement selectAllAttributes = null;
         ResultSet rsAttributes = null;
 
@@ -294,7 +292,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
 
             List<Long> attributes = new ArrayList<>();
 
-            while(rsAttributes.next()) {
+            while (rsAttributes.next()) {
                 attributes.add(rsAttributes.getLong(1));
             }
 
@@ -305,18 +303,19 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         }
     }
 
-    private Attribute saveAttribute(String attributeName, Attribute attribute) throws SQLException{
-        if(attribute.getId() == -1) {
+    // compute the time and subtract it from the total time
+    private Attribute saveAttribute(String attributeName, Attribute attribute) throws SQLException { // should be cached
+        if (attribute.getId() == -1) {
             PreparedStatement psFindAttribute = null;
             ResultSet attributes = null;
 
             try {
                 psFindAttribute = conn.prepareStatement(FIND_ATTRIBUTE_QUERY);
-                psFindAttribute.setString(1, attribute.getType().toString());
+                psFindAttribute.setString(1, attribute.getType().toString()); // is the type needed? no
                 psFindAttribute.setString(2, attributeName);
                 attributes = psFindAttribute.executeQuery();
 
-                if(attributes.next()){
+                if (attributes.next()) {
                     long attributeId = attributes.getLong("id");
                     attribute = new AttributeBuilder().setId(attributeId).setType(attribute.getType()).setValue(attribute.getValue()).createAttribute();
                 } else {
@@ -335,7 +334,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
 
-    private Attribute createAttribute(String attributeName, String attributeType) throws SQLException{
+    private Attribute createAttribute(String attributeName, String attributeType) throws SQLException {
         PreparedStatement createAttributeDB = null;
         ResultSet keySet = null;
 
@@ -344,16 +343,12 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             createAttributeDB.setString(1, attributeType);
             createAttributeDB.setString(2, attributeName);
 
-            log.info("@@ Started creating new Attribute, EAV SQL");
-            Instant startCA = Instant.now();
+            long startTime = System.currentTimeMillis();
+            int numberOfNewEntries = createAttributeDB.executeUpdate();
+            long endTime = System.currentTimeMillis();
+            log.debug("@@ Finished creating new Attribute, EAV SQL, duration: {} ms", endTime - startTime);
 
-            int numberOfNewEnttries = createAttributeDB.executeUpdate();
-
-            Instant endCA = Instant.now();
-            log.info("@@ Finished creating new Attribute, EAV SQL, duration: {}ms", Duration.between(startCA,endCA).toMillis());
-
-
-            if(numberOfNewEnttries == 1) {
+            if (numberOfNewEntries == 1) {
                 keySet = createAttributeDB.getGeneratedKeys();
                 return new AttributeBuilder().setId(getIdFromGeneratedKeys(keySet, ATTRIBUTE_TABLE)).setType(AttributeType.valueOf(attributeType)).setValue(null).createAttribute();
             } else {
@@ -367,7 +362,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     @Override
-    public Page loadPage(long pageId) throws SQLException{
+    public Page loadPage(long pageId) throws SQLException {
         //load Page
         Page page;
 
@@ -380,16 +375,12 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             stLoadPage = conn.prepareStatement(FIND_PAGE_BY_ID_QUERY);
             stLoadPage.setLong(1, pageId);
 
-            log.info("@@ Started loading page, EAV SQL");
-            Instant startLP = Instant.now();
-
+            long startTime = System.currentTimeMillis();
             rsLoadPage = stLoadPage.executeQuery();
+            long endTime = System.currentTimeMillis();
+            log.debug("@@ Finished loading page, EAV SQL, duration: {}ms", endTime - startTime);
 
-            Instant endLP = Instant.now();
-            log.info("@@ Finished loading page, EAV SQL, duration: {}ms", Duration.between(startLP, endLP).toMillis());
-
-
-            if(rsLoadPage.next()) {
+            if (rsLoadPage.next()) {
                 page = new Page(rsLoadPage.getInt(1), rsLoadPage.getString(2));
             } else {
                 return null;
@@ -399,16 +390,13 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             stLoadAttributes = conn.prepareStatement(GET_PAGE_ATTRIBUTES_QUERY);
             stLoadAttributes.setLong(1, pageId);
 
-            log.info("Started loading page attributes, EAV SQL");
-            Instant startLA = Instant.now();
-
+            startTime = System.currentTimeMillis();
             attributesSet = stLoadAttributes.executeQuery();
+            endTime = System.currentTimeMillis();
+            log.debug("Finished loading page attributes, EAV SQL, duration: {}ms", endTime - startTime);
 
-            Instant endLA = Instant.now();
-            log.info("Finished loading page attributes, EAV SQL, duration: {}ms", Duration.between(startLA,endLA).toMillis());
-
-            while(attributesSet.next()) {
-                page.addAttribute( attributesSet.getString(4),
+            while (attributesSet.next()) {
+                page.addAttribute(attributesSet.getString(4),
                         new AttributeBuilder().setId(attributesSet.getLong(1)).setType(AttributeType.valueOf(attributesSet.getString(3))).setValue(attributesSet.getString(2)).createAttribute());
             }
 
@@ -425,7 +413,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
 
     @Override
     public List<Page> findPagesByType(String type) throws SQLException {
-        if(type == null || type.isEmpty()){
+        if (type == null || type.isEmpty()) {
             throw new IllegalArgumentException("Typename has to be a non empty String");
         }
 
@@ -435,19 +423,16 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         try {
             stFindPagesByAttribute = conn.prepareStatement(FIND_PAGE_BY_TYPE_QUERY);
             stFindPagesByAttribute.setString(1, type);
+            stFindPagesByAttribute.setFetchSize(100);
 
-            log.info("@@ Started finding pages by type, EAV SQL");
-            Instant startQT = Instant.now();
-
+            long startTime = System.currentTimeMillis();
             rsPages = stFindPagesByAttribute.executeQuery();
+            long endTime = System.currentTimeMillis();
+            log.debug("@@ Finished finding pages by type, EAV SQL, duration: {}ms", endTime - startTime);
 
-            Instant endQT = Instant.now();
-            log.info("@@ Finished finding pages by type, EAV SQL, duration: {}ms", Duration.between(startQT,endQT).toMillis());
-
-            List<Page> pageList= new ArrayList<>();
-
+            List<Page> pageList = new ArrayList<>();
             int i = 0;
-            while(rsPages.next() && i<getQueryPageSize()) {
+            while (rsPages.next() && i < getQueryPageSize()) {
                 pageList.add(loadPage(rsPages.getInt(1)));
                 i++;
             }
@@ -461,8 +446,8 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
 
     //Add attributeType?
     @Override
-    public List<Page> findPagesByAttributeName(String attributeName) throws SQLException{
-        if(attributeName == null){
+    public List<Page> findPagesByAttributeName(String attributeName) throws SQLException {
+        if (attributeName == null) {
             throw new IllegalArgumentException("attributeName must not be null");
         }
 
@@ -472,19 +457,16 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         try {
             stFindPagesByAttribute = conn.prepareStatement(FIND_PAGE_BY_ATTRIBUTE_QUERY);
             stFindPagesByAttribute.setString(1, attributeName);
+            stFindPagesByAttribute.setFetchSize(100);
 
-            log.info("@@ Started finding pages by attribute name, EAV SQL");
-            Instant startQN = Instant.now();
-
+            long startTime = System.currentTimeMillis();
             rsPages = stFindPagesByAttribute.executeQuery();
+            long endTime = System.currentTimeMillis();
+            log.debug("@@ Finished finding pages by attribute name, EAV SQL, duration: {}ms", endTime - startTime);
 
-            Instant endQN = Instant.now();
-            log.info("@@ Finished finding pages by attribute name, EAV SQL, duration: {}ms", Duration.between(startQN,endQN).toMillis());
-
-            List<Page> pageList= new ArrayList<>();
-
+            List<Page> pageList = new ArrayList<>();
             int i = 0;
-            while(rsPages.next() && i<getQueryPageSize()) {
+            while (rsPages.next() && i < getQueryPageSize()) {
                 pageList.add(loadPage(rsPages.getInt(1)));
                 i++;
             }
@@ -499,16 +481,15 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     /**
-     *
      * @param attributeName the name of the attribute we are searching
-     * @param value the attribute including value we are searching, id and type are ignored in the EAV approach,
-     *              since attribute names are unique and every attribute has a certain type already saved in the db
+     * @param value         the attribute including value we are searching, id and type are ignored in the EAV approach,
+     *                      since attribute names are unique and every attribute has a certain type already saved in the db
      * @return a List of Page Objects which have the matching attribute
      * @throws SQLException
      */
     @Override
-    public List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException{
-        if(attributeName == null){
+    public List<Page> findPagesByAttributeValue(String attributeName, Attribute value) throws SQLException {
+        if (attributeName == null) {
             throw new IllegalArgumentException();
         }
 
@@ -518,7 +499,7 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
         try {
             String dbDependentQuery = "";
 
-            if(dbContext.equals("oracle")){
+            if (dbContext.equals("oracle")) {
                 dbDependentQuery = ORACLE_FIND_PAGE_BY_ATTRIBUTE_VALUE_QUERY;
             } else {
                 dbDependentQuery = FIND_PAGE_BY_ATTRIBUTE_VALUE_QUERY;
@@ -526,19 +507,18 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
             stFindPagesByAttributeValue = conn.prepareStatement(dbDependentQuery);
             stFindPagesByAttributeValue.setString(1, attributeName);
             stFindPagesByAttributeValue.setString(2, value.getValue().toString());
+            stFindPagesByAttributeValue.setFetchSize(100);
 
             log.info("@@ Started finding by attribute value, EAV SQL");
-            Instant startQV = Instant.now();
 
+            long startTime = System.currentTimeMillis();
             rsPages = stFindPagesByAttributeValue.executeQuery();
+            long endTime = System.currentTimeMillis();
+            log.debug("@@ Finished finding by attribute value, EAV SQL, duration: {} ms", endTime - startTime);
 
-            Instant endQV = Instant.now();
-            log.info("@@ Finished finding by attribute value, EAV SQL, duration: {}ms", Duration.between(startQV,endQV).toMillis());
-
-            List<Page> pageList= new ArrayList<>();
-
+            List<Page> pageList = new ArrayList<>();
             int i = 0;
-            while(rsPages.next() && i < getQueryPageSize()) {
+            while (rsPages.next() && i < getQueryPageSize()) {
                 pageList.add(loadPage(rsPages.getInt(1)));
                 i++;
             }
@@ -553,14 +533,14 @@ public class EAV_DatabaseAdapter implements IDatabaseAdapter {
     }
 
     //Helper method since Oracle and Postgres handle generated keys differently
-    private long getIdFromGeneratedKeys(ResultSet rs, String table) throws SQLException{
-        if(rs.next()) {
-            if(rs.getMetaData().getColumnName(1).equals("ROWID")) {
+    private long getIdFromGeneratedKeys(ResultSet rs, String table) throws SQLException {
+        if (rs.next()) {
+            if (rs.getMetaData().getColumnName(1).equals("ROWID")) {
                 //Oracle returns a rowid for generated keys...
                 String query = "";
-                if(table.equals(ENTITY_TABLE)) {
+                if (table.equals(ENTITY_TABLE)) {
                     query = "SELECT id FROM entities WHERE ROWID = ?";
-                } else if(table.equals(ATTRIBUTE_TABLE)) {
+                } else if (table.equals(ATTRIBUTE_TABLE)) {
                     query = "SELECT id FROM attributes WHERE ROWID = ?";
                 }
 
