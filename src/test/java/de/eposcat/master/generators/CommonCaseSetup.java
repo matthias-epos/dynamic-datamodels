@@ -39,6 +39,8 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup {
 
     private static final Logger log = LoggerFactory.getLogger(CommonCaseSetup.class);
 
+    private static final Database databaseApplication = Database.DA_POSTGRES;
+
     private static final String TEST_CASE_NAME = "Best Case Scenario";
     private static final int NUMBER_OF_START_ENTITIES = 100000;
     private static final int NUMBER_OF_START_ATTRIBUTES = 1000;
@@ -52,11 +54,11 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup {
 
     @BeforeAll
     static void setupData() throws SQLException {
-        POSTGRES.start();
-        assertThat(POSTGRES.isRunning(), is(true));
-        log.info("Postgres container is running. Generating initial data for JSON and EAV approach.");
+        getContainer(databaseApplication).start();
+        assertThat(getContainer(databaseApplication).isRunning(), is(true));
+        log.info("Container is running. Generating initial data for JSON and EAV approach.");
 
-        initAdapters();
+        initAdapters(databaseApplication);
 
         // generate test data only for empty DBs
         List<IDatabaseAdapter> emptyDbs = Lists.newArrayList();
@@ -91,7 +93,12 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup {
                 testChanges(ADAPTERS_MAP.get(approachName), approachName);
                 testAttributeNameQuery(ADAPTERS_MAP.get(approachName), approachName);
                 testAttributeValue(ADAPTERS_MAP.get(approachName), approachName, new AttributeBuilder().setValue("true").setType(AttributeType.String).createAttribute());
-                changeSingleBigAttributeTest(ADAPTERS_MAP.get(approachName), approachName);
+
+                // This test does not work for the 1.000.000 postgres eav with index case
+                // There's no easy way to test for that so we have to skip it manually
+//              if(!approachName.equals("postgresEav") ){
+                    changeSingleBigAttributeTest(ADAPTERS_MAP.get(approachName), approachName);
+//              }
             }
         }
     }

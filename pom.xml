@@ -210,16 +210,17 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.22.1</version>
       </plugin>
+
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <configuration>
-		<executable>docker/buildDockerImages${script.extension}</executable>
-	<arguments>
-		<argument>mvn</argument>
-	</arguments>
-  
-        </configuration>
+          <executable>docker/buildDockerImages${script.extension}</executable>
+          <arguments>
+              <argument>mvn</argument>
+          </arguments>
+
+          </configuration>
         <version>1.6.0</version>
         <executions>
           <execution>

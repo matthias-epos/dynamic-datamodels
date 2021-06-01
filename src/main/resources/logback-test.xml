@@ -5,6 +5,14 @@
         </encoder>
     </appender>
 
+    <appender name="last-run-extended" class="ch.qos.logback.core.FileAppender">
+        <file>logs/last-run-extended.log</file>
+        <append>false</append>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %logger{0} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <appender name="last-run" class="ch.qos.logback.core.FileAppender">
         <file>logs/last-run.log</file>
         <append>false</append>
@@ -33,6 +41,7 @@
 
     <root level="info">
         <appender-ref ref="STDOUT"/>
+        <appender-ref ref="last-run-extended"/>
         <!--        <appender-ref ref="SQL-to-file"/>-->
         <!--        <appender-ref ref="last-run"/>-->
     </root>

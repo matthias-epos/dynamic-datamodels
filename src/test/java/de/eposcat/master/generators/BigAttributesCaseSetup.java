@@ -44,6 +44,8 @@ public class BigAttributesCaseSetup extends PerformanceTestContainerStartup {
 
     private static final Logger log = LoggerFactory.getLogger(BigAttributesCaseSetup.class);
 
+    private static final Database databaseApplication = Database.DA_POSTGRES;
+
     private static final String TEST_CASE_NAME = "Big Attribute";
     private static final int NUMBER_OF_START_ENTITIES = 100;
     private static final int NUMBER_OF_START_ATTRIBUTES = 30;
@@ -56,11 +58,11 @@ public class BigAttributesCaseSetup extends PerformanceTestContainerStartup {
 
     @BeforeAll
     static void setupData() throws SQLException {
-        POSTGRES.start();
-        assertThat(POSTGRES.isRunning(), is(true));
-        log.info("Postgres container is running. Generating initial data for JSON and EAV approach.");
+        getContainer(databaseApplication).start();
+        assertThat(getContainer(databaseApplication).isRunning(), is(true));
+        log.info("Container is running. Generating initial data for JSON and EAV approach.");
 
-        initAdapters();
+        initAdapters(databaseApplication);
 
         // generate test data only for empty DBs
         List<IDatabaseAdapter> emptyDbs = Lists.newArrayList();
