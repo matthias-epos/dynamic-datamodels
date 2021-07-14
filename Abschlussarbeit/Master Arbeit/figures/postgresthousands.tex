@@ -1,0 +1,51 @@
+\documentclass[preview]{standalone}
+\usepackage{tikz, pgfplots}
+
+\definecolor{pU}{HTML}{003f5c}
+\definecolor{pFA}{HTML}{444e86}
+\definecolor{pFV}{HTML}{955196}
+\definecolor{pCBA}{HTML}{dd5182}
+\definecolor{pDP}{HTML}{ff6e54}
+\definecolor{pCP}{HTML}{ffa600}
+
+\begin{document}
+\begin{tikzpicture}
+	\begin{axis}[
+		width = \textwidth,
+		height = 8cm,
+		major x tick style = transparent,
+		ybar=2*\pgflinewidth,
+        bar width=11pt,
+        ymajorgrids = true,
+        ylabel = {Zeit in ms},
+        symbolic x coords={A,B,C,D},
+        xtick = data,
+        xlabel style={align=center},
+        xlabel = \\A: JSON ohne Index \qquad \qquad \qquad C: EAV ohne Index \\ \qquad \qquad B: JSON mit Index  \qquad \qquad \qquad D: EAV mit Index \\ 100 000 Einträge, 
+        scaled y ticks = false,
+        enlarge x limits=0.25,
+        ymin=0,
+        legend cell align=left,
+                legend style={
+                at={(1,1.05)},
+                anchor=south east,
+                column sep=1ex
+        }
+	]
+	
+	\addplot[style={pU, fill=pU, mark=none}]
+			coordinates {(A, 12)(B, 12)(C, 89)(D, 88)};
+		
+	\addplot[style={pFA, fill=pFA, mark=none}]
+			coordinates {(A, 52)(B, 55)(C, 268)(D, 239)};
+			
+	\addplot[style={pFV, fill=pFV, mark=none}]
+			coordinates {(A, 64)(B, 73)(C, 281)(D, 231)};
+	\addplot[style={pCBA, fill=pCBA, mark=none}]
+			coordinates {(A, 391)(B, 388)(C, 408)(D, 0)};
+	\addplot[style={pDP, fill=pDP, mark=none}]
+			coordinates {(A, 19)(B, 19)(C, 355)(D, 349)};			
+	\legend{Update page, Find by Attribute, Find by value, Change Big Attribute, Delete Page}
+	\end{axis}
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,30 @@
+\chapter{Abschluss}
+
+Letztendlich konnte in dieser Arbeit nur ein kleiner Teil der möglichen Umsetzungsarten untersucht werden. Der Grundaufbau des Testprojekts, welches nun frei im Internet verfügbar ist, würde es möglich machen, es mit vielen weiteren Lösungswegen zu erweitern und diese zu vergleichen.
+Besonders wichtig wäre die Untersuchung der NO- und New SQL Datenbanken. Obwohl nur ein kleiner Teil dieser Datenbanken ein passendes Datenmodell und Fokus haben, wären diese Datenbanken wichtige Testkandidaten. Dazu gehören z.B. der Wide-Column Store Cassandra oder die In-Memory Datenbank Hana. Leider wird der Einsatz moderner und nicht stark etablierter Lösungen oft durch Angst vor Integrations- oder Sicherheitsproblemen in etablierten Organisationen verhindert oder erschwert. Hier besteht die Hoffnung, das wachsende Bekanntheit und wachsendes Wissen über die Technologien die Adaption dieser Datenbanken in Zukunft leichter machen.
+
+Ein weiteres Gebiet, das Betrachtung verdient, ist der Einfluss des Aufbaus der Testdaten auf die Performance. Die schlechte Leistung des \ac{GIN} könnte ein Indiz dafür sein. Desto näher sich die Testdaten an realen Daten orientieren, desto wertvoller sind alle Aussagen, die mit den Tests getroffen werden. Es wird nie eine perfekte Struktur, die alle Anwendungsgebiete abdeckt, geben. Doch jede mögliche Annäherung stärkt das Vertrauen in die Ergebnisse.
+
+Auch die untersuchten Anwendungsfälle könnten erweitert werden. Die Performance von CRUD Operationen ist ein Grundbaustein der Performance. Zusätzlich könnte der Einfluss von parallelen Zugriffen mit mehreren Benutzern und der Einfluss durch das Hinzufügen oder Entfernen von Attributen gemessen werden. Der zweite Fall würde in den untersuchten Ansätzen nur geringen Einfluss haben, könnte aber Andere stärker treffen.
+
+Gesamt gesehen gibt es viele Möglichkeiten, dieses Thema weiter zu untersuchen. Vielleicht kann diese Arbeit eine Starthilfe für die weitere Betrachtung sein.
+
+
+% Nur kleiner Einblick in Lösungsverfahren, Testumsetzung minimal Produkt
+% Echte Anwendungen würden Features erwarten, die zur Umsetzung der Tests fallen gelassen wurden
+
+% Mögliche Ziele für weitere Untersuchung des Feldes
+% Höchste Prio: No und NewSQL: Selbst wenn Fokus auf MultiMega ist, heisst das nicht, dass sie nicht trotzdem verwendet werden könnten
+% InMemory Datenbanken und Column-Stores
+% Erweiterbare - Funktionale Testumgebung -> Weiterentwickulung für andere Datenbankysteme
+% Echtere Daten -> vllt Grund für schlechte Performance des Index
+
+
+
+%Komplexere Daten
+%Echtere Daten ->Gin index
+%Mehr Datenbanken
+%Ähnlich wie bei Wahl einer NoSQL Lösung -> Betrachtung des Anwendungsfalls
+
+
+\listoftodos

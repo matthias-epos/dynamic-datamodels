@@ -1,0 +1,68 @@
+This is BibTeX, Version 0.99d
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main.aux
+Reallocating 'name_of_file' (item size: 1) to 9 items.
+The style file: plaindin.bst
+Reallocating 'name_of_file' (item size: 1) to 8 items.
+Reallocating 'singl_function' (item size: 4) to 100 items.
+Reallocating 'singl_function' (item size: 4) to 100 items.
+Reallocating 'wiz_functions' (item size: 4) to 6000 items.
+Reallocating 'singl_function' (item size: 4) to 100 items.
+Reallocating 'singl_function' (item size: 4) to 100 items.
+Database file #1: sources.bib
+Warning--to sort, need author or key in hibernate.13.07.2021
+Warning--to sort, need author or key in cayenne.19.03.2021
+Warning--to sort, need author or key in Erika.15.06.2021
+Warning--to sort, need author or key in .12.07.2021
+Warning--to sort, need author or key in xml.09.10.2018
+Warning--to sort, need author or key in xpath.06.04.2021
+Warning--to sort, need author or key in xsd.09.10.2018
+Warning--to sort, need author or key in oraclexe.13.07.2021
+Warning--to sort, need author or key in .10.07.2021
+Warning--to sort, need author or key in .10.07.2021b
+Warning--to sort, need author or key in pypl.01.07.2021
+Warning--to sort, need author or key in testcontainers.13.07.2021
+Warning--empty publisher in Brewer.2000
+Warning--empty pages in Brewer.2000
+You've used 52 entries,
+            4335 wiz_defined-function locations,
+            1167 strings with 16250 characters,
+and the built_in function-call counts, 32570 in all, are:
+= -- 3251
+> -- 728
+< -- 1023
++ -- 1156
+- -- 274
+* -- 2311
+:= -- 5375
+add.period$ -- 109
+call.type$ -- 52
+change.case$ -- 222
+chr.to.int$ -- 0
+cite$ -- 66
+duplicate$ -- 772
+empty$ -- 2485
+format.name$ -- 499
+if$ -- 6570
+int.to.chr$ -- 0
+int.to.str$ -- 52
+missing$ -- 278
+newline$ -- 344
+num.names$ -- 84
+pop$ -- 365
+preamble$ -- 1
+purify$ -- 222
+quote$ -- 0
+skip$ -- 1503
+stack$ -- 0
+substring$ -- 3142
+swap$ -- 235
+text.length$ -- 170
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 200
+warning$ -- 14
+while$ -- 267
+width$ -- 54
+write$ -- 746
+(There were 14 warnings)

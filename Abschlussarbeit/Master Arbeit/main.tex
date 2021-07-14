@@ -1,0 +1,248 @@
+\documentclass[a4paper, DIV=15, BCOR=1.5cm, 12pt, oneside, openright]{scrreprt}
+
+\usepackage[ngerman]{babel}
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{setspace}
+%\usepackage{fancyhdr}
+%\usepackage[style=authortitle-icomp]{biblatex}
+\usepackage[babel,german=guillemets]{csquotes}
+\usepackage{bibgerm}
+\usepackage{cite}
+%\usepackage{footcite}
+\usepackage[bottom=3cm]{geometry}
+%\usepackage{subfigure}
+\usepackage{acronym}
+\usepackage[hyphens]{url}
+%\usepackage{hyperref} %//Links in PDF
+%\usepackage{breakurl}
+\usepackage{tabularx,ragged2e}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage{geometry}
+\usepackage[disable]{todonotes}
+\usepackage{wrapfig}
+\usepackage{tcolorbox}
+\usepackage{listings}
+\usepackage{rotating}
+\usepackage{tabularx}
+\usepackage{diagbox}
+\usepackage{pifont}
+\usepackage{scrhack}
+\usepackage{placeins}
+\usepackage{subcaption}
+\usepackage{tikz,ifthen,xstring,calc,pgfkeys,pgfopts, pgfplots}
+\usepackage{float}
+
+\usepackage[mode=buildnew]{standalone}
+
+\usepackage{tikz-uml}
+\usepackage{blindtext}
+\usepackage{adjustbox}
+
+\newcommand{\rulesep}{\unskip\ \vrule\ }
+
+\colorlet{punct}{red!60!black}
+\definecolor{background}{HTML}{EEEEEE}
+\definecolor{delim}{RGB}{20,105,176}
+\colorlet{numb}{magenta!60!black}
+
+\definecolor{pU}{HTML}{003f5c}
+\definecolor{pFA}{HTML}{444e86}
+\definecolor{pFV}{HTML}{955196}
+\definecolor{pCBA}{HTML}{dd5182}
+\definecolor{pDP}{HTML}{ff6e54}
+\definecolor{pCP}{HTML}{ffa600}
+
+
+\lstdefinelanguage{json}{
+    basicstyle=\normalfont\ttfamily\setstretch{1},
+    numbers=left,
+    numberstyle=\scriptsize,
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    tabsize=2,
+    literate=
+     *{0}{{{\color{numb}0}}}{1}
+      {1}{{{\color{numb}1}}}{1}
+      {2}{{{\color{numb}2}}}{1}
+      {3}{{{\color{numb}3}}}{1}
+      {4}{{{\color{numb}4}}}{1}
+      {5}{{{\color{numb}5}}}{1}
+      {6}{{{\color{numb}6}}}{1}
+      {7}{{{\color{numb}7}}}{1}
+      {8}{{{\color{numb}8}}}{1}
+      {9}{{{\color{numb}9}}}{1}
+      {:}{{{\color{punct}{:}}}}{1}
+      {,}{{{\color{punct}{,}}}}{1}
+      {\{}{{{\color{delim}{\{}}}}{1}
+      {\}}{{{\color{delim}{\}}}}}{1}
+      {[}{{{\color{delim}{[}}}}{1}
+      {]}{{{\color{delim}{]}}}}{1},
+}
+
+\lstdefinelanguage{xml}{
+    basicstyle=\normalfont\ttfamily\setstretch{1},
+    numbers=left,
+    numberstyle=\scriptsize,
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    tabsize=2,
+    literate=
+     *{0}{{{\color{numb}0}}}{1}
+      {1}{{{\color{numb}1}}}{1}
+      {2}{{{\color{numb}2}}}{1}
+      {3}{{{\color{numb}3}}}{1}
+      {4}{{{\color{numb}4}}}{1}
+      {5}{{{\color{numb}5}}}{1}
+      {6}{{{\color{numb}6}}}{1}
+      {7}{{{\color{numb}7}}}{1}
+      {8}{{{\color{numb}8}}}{1}
+      {9}{{{\color{numb}9}}}{1}
+      {:}{{{\color{punct}{:}}}}{1}
+      {,}{{{\color{punct}{,}}}}{1}
+      {\{}{{{\color{delim}{\{}}}}{1}
+      {\}}{{{\color{delim}{\}}}}}{1}
+      {[}{{{\color{delim}{[}}}}{1}
+      {]}{{{\color{delim}{]}}}}{1},
+}
+
+\lstdefinelanguage{swift}
+{
+  morekeywords={
+    func,if,then,else,for,in,while,do,switch,case,default,where,break,continue,fallthrough,return,
+    typealias,struct,class,enum,protocol,var,func,let,get,set,willSet,didSet,inout,init,deinit,extension,
+    subscript,prefix,operator,infix,postfix,precedence,associativity,left,right,none,convenience,dynamic,
+    final,lazy,mutating,nonmutating,optional,override,required,static,unowned,safe,weak,internal,
+    private,public,is,as,self,unsafe,dynamicType,true,false,nil,Type,Protocol,guard,
+  },
+  morecomment=[l]{//}, % l is for line comment
+  morecomment=[s]{/*}{*/}, % s is for start and end delimiter
+  morestring=[b]", % defines that strings are enclosed in double quotes
+  breaklines=true,
+  postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+  frame=single,
+  tabsize=4,
+}
+
+\definecolor{keyword}{HTML}{BA2CA3}
+\definecolor{string}{HTML}{D12F1B}
+\definecolor{comment}{HTML}{008400}
+
+\lstset{
+  language=swift,
+  basicstyle=\ttfamily\setstretch{1},
+  showstringspaces=false, % lets spaces in strings appear as real spaces
+  columns=fullflexible,
+  keepspaces=true,
+  keywordstyle=\color{keyword},
+  stringstyle=\color{string},
+  commentstyle=\color{comment},
+  literate=%
+  {Ö}{{\"O}}1
+  {Ä}{{\"A}}1
+  {Ü}{{\"U}}1
+  {ß}{{\ss}}1
+  {ü}{{\"u}}1
+  {ä}{{\"a}}1
+  {ö}{{\"o}}1,
+  breaklines,
+  breakatwhitespace,
+}
+
+%\usepackage{comment}
+
+%\excludecomment{figure}
+%\let\endfigure\relax
+%\excludecomment{equation}
+%\let\endequation\relax
+%\excludecomment{lstlisting}
+%\let\endlstlisting\relax
+
+
+\begin{document}
+
+%#########
+%
+% Titelblatt
+%
+%#########
+\input{input/title}
+
+%#########
+%
+% Abstract und Erklärung 
+%
+%#########
+\setstretch{1.5}
+\input{input/abstract}
+\setstretch{1}
+\input{input/erklaerung}
+%#########
+%
+% Inhaltsverzeichnis Glossar etc.
+%
+%#########
+
+\input{input/abk}
+
+\tableofcontents
+
+
+%#########
+%
+% Einleitung
+%
+%#########
+\setstretch{1.5}
+\input{input/einleitung/einleitung}
+\cleardoublepage
+
+%#########
+%
+% Technologieübersicht
+%
+%#########
+
+\input{input/technologie/technologie}
+
+%#########
+%
+% Performanceanalyse
+%
+%#########
+
+\input{input/praxis/testaufbau}
+
+%#########
+%
+% Schluss
+%
+%#########
+
+\input{input/schluss}
+
+%#########
+%
+% Verzeichnisse
+%
+%#########
+\addcontentsline{toc}{chapter}{Abbildungsverzeichnis}
+\listoffigures
+
+\addcontentsline{toc}{chapter}{Quellcodeverzeichnis}
+\renewcommand\lstlistlistingname{Quellcodeverzeichnis}
+\lstlistoflistings
+	
+\bibliographystyle{plaindin}
+\addcontentsline{toc} 
+{chapter}{Literaturverzeichnis}
+\bibliography{sources}
+
+\end{document}

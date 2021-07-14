@@ -1,0 +1,28 @@
+\babel@toc {ngerman}{}
+\babel@toc {ngerman}{}
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Datenbankmodell EAV Ansatz\relax }}{17}{}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Vergleich des Aufbau\relax }}{21}{}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Klassenmodell des EAV Ansatzes\relax }}{38}{}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Outline Datenbankadapter Interface\relax }}{39}{}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Ergebnisse PostgreSQL 1.000.000 Einträge\relax }}{47}{}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Ergebnisse PostgreSQL 100.000 Einträge\relax }}{47}{}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Ergebnisse Oracle Database 100.000 Einträge\relax }}{48}{}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces Vergleich Ergebnisse PostgreSQL und Oracle Database 100.000 Einträge\relax }}{48}{}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces Vergleich Performance mit bzw. ohne Index PostgreSQL, EAV, 100.000 Einträge\relax }}{52}{}%
+\contentsline {figure}{\numberline {4.8}{\ignorespaces Vergleich Performance mit bzw. ohne Index PostgreSQL, JSON, 100.000 Einträge\relax }}{53}{}%
+\contentsline {figure}{\numberline {4.9}{\ignorespaces Vergleich Performance mit bzw. ohne Index PostgreSQL, JSON, 100.000 Einträge, Anwendungsfall "ChangeBigAttribute"\relax }}{54}{}%
+\contentsline {figure}{\numberline {4.10}{\ignorespaces Vergleich Performance mit bzw. ohne Index PostgreSQL, EAV, 1.000.000 Einträge\relax }}{55}{}%
+\contentsline {figure}{\numberline {4.11}{\ignorespaces Vergleich Performance mit bzw. ohne Index PostgreSQL, JSON, 1.000.000 Einträge\relax }}{56}{}%
+\contentsline {figure}{\numberline {4.12}{\ignorespaces Vergleich Performance mit bzw. ohne Index PostgreSQL, JSON, 1.000.000 Einträge, Anwendungsfall "ChangeBigAttribute"\relax }}{56}{}%
+\contentsline {figure}{\numberline {4.13}{\ignorespaces Vergleich Performance mit bzw. ohne Index Oracle Database, JSON, 100.000 Einträge\relax }}{58}{}%
+\contentsline {figure}{\numberline {4.14}{\ignorespaces Vergleich Ansätze EAV / JSON PostgreSQL, JSON, 100.000 Einträge\relax }}{59}{}%
+\contentsline {figure}{\numberline {4.15}{\ignorespaces Vergleich Ansätze EAV / JSON Oracle Database, 100.000 Einträge\relax }}{60}{}%
+\contentsline {figure}{\numberline {4.16}{\ignorespaces Vergleich Ansätze EAV / JSON PostgreSQL, JSON, 1.000.000 Einträge\relax }}{61}{}%
+\contentsline {figure}{\numberline {4.17}{\ignorespaces Vergleich Datenbankensysteme Oracle Database / PostgreSQL Ansatz JSON, 100.000 Einträge\relax }}{62}{}%
+\contentsline {figure}{\numberline {4.18}{\ignorespaces Vergleich Datenbankensysteme Oracle Database / PostgreSQL Ansatz EAV, 100.000 Einträge\relax }}{63}{}%
+\addvspace {10\p@ }
+\providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 

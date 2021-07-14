@@ -1,0 +1,51 @@
+\babel@toc {ngerman}{}
+\babel@toc {ngerman}{}
+\contentsline {chapter}{\numberline {1}Einleitung}{8}{}%
+\contentsline {chapter}{\numberline {2}Dynamische Datenschemas in relationalen Datenbanken}{10}{}%
+\contentsline {section}{\numberline {2.1}Geschichte und Grundlagen}{10}{}%
+\contentsline {section}{\numberline {2.2}Datenbank Normalisierung: Normalformen}{12}{}%
+\contentsline {section}{\numberline {2.3}Object Relational Mapping}{13}{}%
+\contentsline {section}{\numberline {2.4}Ansätze für dynamische Attribute in relationalen Datenbanken}{15}{}%
+\contentsline {subsection}{\numberline {2.4.1}Bearbeitung des Schemas zur Laufzeit}{15}{}%
+\contentsline {subsection}{\numberline {2.4.2}Entity-Attribute-Value Modell}{17}{}%
+\contentsline {subsection}{\numberline {2.4.3}Speichern von komplexen Daten in LOBs}{19}{}%
+\contentsline {subsection}{\numberline {2.4.4}Weitere Lösungsansätze}{22}{}%
+\contentsline {chapter}{\numberline {3}Moderne Datenbanken}{23}{}%
+\contentsline {section}{\numberline {3.1}NOSQL}{23}{}%
+\contentsline {subsection}{\numberline {3.1.1}Datenmodell}{23}{}%
+\contentsline {subsection}{\numberline {3.1.2}Datenkonsistenz Modell}{26}{}%
+\contentsline {subsection}{\numberline {3.1.3}Partitionierung}{26}{}%
+\contentsline {subsection}{\numberline {3.1.4}CAP Theorem}{27}{}%
+\contentsline {section}{\numberline {3.2}NewSQL}{29}{}%
+\contentsline {chapter}{\numberline {4}Performance Analyse relationaler Lösungswege}{30}{}%
+\contentsline {section}{\numberline {4.1}Test-Dimensionen}{30}{}%
+\contentsline {subsection}{\numberline {4.1.1}Wahl der Datenbank}{31}{}%
+\contentsline {subsection}{\numberline {4.1.2}Anwendungsfälle}{33}{}%
+\contentsline {subsection}{\numberline {4.1.3}Indizierung}{35}{}%
+\contentsline {paragraph}{\nonumberline Oracle}{35}{}%
+\contentsline {paragraph}{\nonumberline PostgresSQL}{36}{}%
+\contentsline {section}{\numberline {4.2}Testaufbau}{36}{}%
+\contentsline {subsection}{\numberline {4.2.1}Programmiertechnische Umsetzung}{37}{}%
+\contentsline {paragraph}{\nonumberline \acf {JDBC}}{37}{}%
+\contentsline {paragraph}{\nonumberline Java Architektur}{38}{}%
+\contentsline {paragraph}{\nonumberline Serialisierung von Objekten}{41}{}%
+\contentsline {subsection}{\numberline {4.2.2}Wiederverwendbarkeit und Reproduktion der Anwendung und Tests}{42}{}%
+\contentsline {subsection}{\numberline {4.2.3}Daten}{44}{}%
+\contentsline {subsection}{\numberline {4.2.4}Hardware und Laufumgebung}{46}{}%
+\contentsline {section}{\numberline {4.3}Ergebnisse}{46}{}%
+\contentsline {subsection}{\numberline {4.3.1}Statistische Analyse der Ergebnisse}{49}{}%
+\contentsline {paragraph}{\nonumberline Oracle JSON 100.000 Elemente}{57}{}%
+\contentsline {paragraph}{\nonumberline PostgreSQL 100.000 Einträge}{59}{}%
+\contentsline {paragraph}{\nonumberline Oracle 100.000 Einträge}{60}{}%
+\contentsline {paragraph}{\nonumberline PostgreSQL 1.000.000 Einträge}{61}{}%
+\contentsline {paragraph}{\nonumberline Vergleich EAV Ansatz}{62}{}%
+\contentsline {subsection}{\numberline {4.3.2}Interpretation der Ergebnisse}{63}{}%
+\contentsline {paragraph}{\nonumberline Unterschiede Performance PostgreSQL und Oracle Database}{64}{}%
+\contentsline {paragraph}{\nonumberline Schlechte Performance des GIN Index bei vielen Einträgen}{65}{}%
+\contentsline {paragraph}{\nonumberline Schlechte Performance des Ansatz EAV bei dem Anwendungsfall ``DeletePage''}{66}{}%
+\contentsline {section}{\numberline {4.4}Fazit}{67}{}%
+\contentsline {chapter}{\numberline {5}Abschluss}{70}{}%
+\contentsline {chapter}{Abbildungsverzeichnis}{71}{}%
+\contentsline {chapter}{Quellcodeverzeichnis}{73}{}%
+\contentsline {chapter}{Literaturverzeichnis}{74}{}%
+\providecommand \tocbasic@end@toc@file {}\tocbasic@end@toc@file 

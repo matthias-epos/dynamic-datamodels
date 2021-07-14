@@ -1,0 +1,112 @@
+\chapter{Moderne Datenbanken}
+
+Seit dem Aufstieg des Internets müssen sich Datenbankentwickler neuen Herausforderungen stellen. Global verfügbare Anwendungen und Dienstleistungen, die von Millionen von Benutzern gleichzeitig verwendet werden, haben andere Anforderungen als die gewohnten tabellarischen Systeme. Dazu gehören größere Datenmengen, komplizierte Beziehungen zwischen Entities, Ausfallresistenz oder dynamische Datenstrukturen. Um diese Herausforderungen zu lösen wurden Abstriche in den gewohnten Stärken von \ac{DBMS}, etwa der Konsistenz der Daten oder das fest definierte relationale Modell, in Kauf genommen. Diese neuen Produkte werden oft unter dem Begriff \ac{NOSQL}-Datenbanken gelistet. Aber auch Datenbanken mit relationalen Modell wurden weiterentwickelt und es entstanden neue Produkte mit neuen Stärken. 
+
+\section{NOSQL}
+Ohne Überblick über die verschiedenen Merkmale von \ac{NOSQL}-Datenbanken fällt es schwer, die Aussage zu treffen, ob eine diese Datenbanken zu dem jeweils vorliegendem Anwendungsfall passt. Daher werden in diesem Abschnitt vier Merkmale dieser Datenbanken, basierend auf der Arbeit von Davoudian et al.\cite{Davoudian.2018} vorgestellt, um anschließend zu entscheiden, ob eine dieser Lösungen für unser Problem passt.
+
+\subsection{Datenmodell}
+
+Der prägnanteste Unterschied, der bereits aus der Bezeichnung NOSQL ersichtlich ist, sind die verschiedenen verfügbaren Datenmodelle. Sie ermöglichen es Daten, die nicht in das tabellarische Format passen, abzubilden. Aktuell umfasst der Begriff NOSQL im Groben vier verschiedene bekannte Modelle. Es gibt jedoch auch bereits Produkte, die verschiedene Modelle vereinen oder die den hier genannten nur ähneln.
+% möglichkeit, wieter zu unterscheiden
+
+\paragraph*{Key-Value Stores}
+
+Key-Value Stores sind die unrestriktivsten Datenbanken bezüglich ihres Inhalts. Sie legen die Dateien in einem Schlüssel - Wert Format ab. Der Schlüssel, meist ein Merkmal zur Identifikation, ist das einzige Medium zur Interaktion mit der Datenbank und steht für einen Eintrag in der Datenbank. Der Value, der unter einem Key abgelegt wird, kann ein beliebiges Format annehmen. Die Inhalte der Datenbank lassen sich per Schlüssel abfragen, Querys nach bestimmten Werten sind nicht oder nur dank spezieller Features einzelner Datenbanken möglich. Daher finden Key-Value Stores oft in Fällen Einsatz, in denen schnell komplexe Daten abgelegt und abgerufen werden müssen, etwa zur Verwaltung von User-Sessions. Sie lassen sich außerdem weiter unterscheiden nach der Art des Speichermediums. In-Memory Key-Value Stores eignen sich für Caching und ähnliche Anwendungsfälle, in denen die Daten flüchtig sind. Nicht-flüchtige Daten können in persistenten oder hybriden, die sowohl im Arbeitsspeicher als auch auf einer Festplatte agieren, Key-Value Stores abgelegt werden.
+Bekannte und beliebte Systeme sind Redis, DynamoDB und Azure Cosmos DB.
+
+
+\paragraph*{Dokumentendatenbanken}
+
+Dokumentendatenbanken verfolgen denselben Ansatz wie Key-Value Stores, ermöglichen es aber, nur Teile von Werten auszulesen und auch nach bestimmten Werten in Querys zu suchen. Dies geschieht, indem die Werte festgesetzten Formaten folgen. Standardmäßig werden hierfür oft die Formate XML oder JSON verwendet, da diese durch das Web-Umfeld bereits viel Einsatz finden. Relationen zwischen einzelnen Einträge in der Datenbank können mit Fremdschlüsseln abgebildet werden oder direkt ineinander abgelegt werden.
+
+\paragraph*{Wide-Column-Store}
+
+Wide-Column-Stores, auch Column-Family-Stores genannt, ähneln von allen NOSQL Datenmodellen am meisten den der relationalen Datenbanken. Daten werden als Kombination von Reihen und Spalten-Familien, die einer Menge von Spalten entspricht, die in der Regel zusammen aufgerufen werden, dargestellt. Diese Spalten-Familien bilden auch die physische Speichereinheiten.
+
+Beliebte Vertreter dieser Datenbankenart fokussieren sich auf extreme Datenmengen und die Aufteilung dieser Daten auf verschiedene Knoten in einem Cluster. Sowohl Cassandra als auch HBase empfehlen eine Hardwarekonfiguration mit mindestens 3 Knoten.
+
+\paragraph*{Graph-Database}
+
+Graph-Datenbanken legen den Fokus des Daten-Modells auf die Verhältnisse zwischen Entities. Das Ablaufen von Verhältnissen, was in einer SQL Datenbank mit vielen Performance intensiven join-Operationen verbunden wäre, ist eine besondere Stärke dieser Datenbanken. Sie sind in ihrem Datenmodel sehr von der Graphentheorie inspiriert. Dank spezieller Algorithmen können Netzwerkdaten effizient gespeichert werden, wobei es unterschiedliche Verfahren gibt, die jeweils für verschiedene Einsatzzwecke optimiert sind.
+
+Alle NOSQL-Datenmodelle haben ähnliche Anforderungen gegenüber der Modellierung der Informationen. In relationalen Modellen orientiert sich ein Datenbankarchitekt an den Vorgaben der Normalform, um Duplikate in der Datenbank zu vermeiden. Beim Design von NOSQL Schemas liegen die Use-Cases im Vordergrund. Daten werden so abgelegt, das sie performant wieder aufgerufen werden können. Durch die limitierten Abfragewege in NOSQL Datenbanken müssen alle gewünschten Querys abgedeckt werden. Daher ist es manchmal hilfreich, Daten mehrfach in verschiedenen Strukturen abzulegen.
+Die Schemafreiheit von manchen NOSQL-Datenbanken bedeutet nicht komplette Freiheit von Datenstrukturen. Damit Daten automatisch von Programmen verarbeitet werden können, muss eine Struktur definiert sein. Dieser Schritt wird in relationalen Datenbanken per SQL erledigt. Datenbankadministratoren beschreiben das Datenbank Schema mithilfe von Datenbank Werkzeugen. NOSQL Datenbanken jedoch verschieben die Verantwortung von der Datenbankebene auf die Anwendungsebene. Die Struktur der Daten wird entweder als richtig impliziert oder muss mithilfe einer bestimmten \ac{DDL} identifiziert und validiert werden. Dadurch wird der Anwendungscode komplexer und unflexibel, eine Eigenschaft, deren Lösung eigentlich DBMS sein sollten. Der Vorteil dieses Vorgehens ist jedoch, dass das Ablegen der Daten, sollten sie beim Abspeichern nicht auf ein Schema getestet werden, schneller erfolgen kann. Der Moment der Validierung wird vom Speicher- zum Lesevorgang verschoben.
+
+\subsection{Datenkonsistenz Modell} \label{ssec:consistency}
+Neben dem Datenmodell ist ein weiterer wichtiger Punkt für die Auswahl einer Datenbank die Konsistenz der Daten. Dies ist besonders bei Datenbanken der Fall, die über mehrere Knoten aufgeteilt sind, ein Feature vieler NOSQL Datenbanken. Bei gleichzeitigen Lese- und Schreibvorgängen auf verschiedenen Knoten, die Duplikate der selben Datensätze speichern, muss das Verhalten der Datenbank voraussagbar sein.
+Viotti und Vukolic\cite{Viotti.01.12.2015} haben über 50 verschiedene Konsistenz-Modelle untersucht und in Relation zueinander gesetzt. Gröber betrachtet lassen sich diese in verschiedene Kategorien eingliedern.
+Der strikteste Konsistenz ist starke Konsistenz, auch als Liniearisierbarkeit bekannt, in der die Reihenfolge der Operationen strikt und fest ist. Am anderen Ende des Spektrums liegt Eventual Consistency, ein Model das den Fokus auf Performance und Verfügbarkeit setzt. Dass Dateneinträge eventuell veraltet sein können, wird ignoriert und man erwartet nur, dass irgendwann am Schluss alle Einträge konsistent sind.
+
+\subsection{Partitionierung}
+Partitionierung beschreibt die Möglichkeit, Daten auf mehrere Knoten aufzuteilen. Dies geschieht meist auf horizontaler Ebene, d.h. Aufteilung der Daten auf mehrere Maschinen. Dies ermöglicht schnelleren Zugriff basierend auf geographischen Faktoren, als auch parallelen Zugriff auf unterschiedliche Datensätze. Dieser Vorgang, auch als Sharding bekannt, ist mit den meisten relationalen Datenbanken nicht möglich. Man kann Datenbanken basierend auf verschiedenen Partitionierungsfokusse unterscheiden, etwa zur Verteilung der Daten um die Auslastung von Maschinen auszugleichen oder um eine Mindestanzahl an Backups versichern zu können.
+
+\subsection{CAP Theorem}
+
+Das CAP Theorem beschreibt das Verhältnis von Konsistenz, Verfügbarkeit und Aufteilungstoleranz.
+\begin{itemize}
+\item Consistency (C) - 
+Die Konsistenz der Daten, vgl. \ref{ssec:consistency}
+\item Availability (A) - 
+Die Verfügbarkeit und Reaktionsgeschwindigkeit des Systems, um sowohl Lese- als auch Schreibanweisungen durchzuführen
+\item Partition Tolerance (P) - 
+Die Toleranz, die das System gegenüber Teilausfällen, z.B. einzelner Nodes, zeigt.
+
+\end{itemize}
+
+Das Theorem besagt: 
+ 
+\begin{quote}
+"`You can have at most two of these properties for any shared-data system"' \cite[Folie 14]{Brewer.2000}
+\end{quote}
+
+So lassen sich verteilte Datensysteme als CA, CP oder AP einstufen. Traditionelle relationale Single Node Datenbanken zum Beispiel fallen unter CA, d.h. nur konsistent und verfügbar, da ein Ausfall eines Knotens das gesamte System stilllegt. Genau betrachtet wäre das jedoch keine Spaltung sondern ein Komplettausfall. Systeme, die eine gewisse Toleranz gegenüber Spaltung erreichen wollen, müssen Abstriche in einem der beiden anderen Themen in Kauf nehmen. Dies basiert auf der Verteiltheit der Daten. Um die aktuellste Version eines Datensatzes zu bekommen, müssen alle zuständigen Nodes abgefragt werden. Dies erhöht jedoch die Laufzeit von Anfragen. Ein Administrator muss also basierend auf dem Anwendungsfall die Wahl zwischen Datenbanksystemen bzw. Datenbank-Konfigurationen treffen.
+
+Das Theorem, die wissenschaftliche Untersuchung des Theorems und der Umgang damit wird jedoch auch kritisiert. Viele Datenbanken erfüllen nicht die strengen Anforderungen des Beweises des Theorems, identifizieren sich jedoch trotzdem als eine der Variationen. Es kann auch sein, dass Datenbanken diesen Anforderungen nur entsprechen, falls sie in einem bestimmten Modus laufen. \cite{MartinKleppmann.2015}
+
+Es lohnt sich dennoch es zu betrachten, da es hilft, grundlegende Unterschiede von verteilten Datenbanksystemen zu erkennen. 
+
+
+
+Die beschriebenen Eigenschaften von NOSQL Datenbanken geben Einblick über ihre Fokusse. Diese liegen hauptsächlich auf verteilten Datenbanken, mit eingeschränkter Konsistenz der Daten und maximaler Anzahl von Querys. 
+Sie eignen sich für extreme Datenmengen und Daten mit speziellen Format. Diese Daten können meist nur in einer bestimmten Form abgerufen werden, da nur in bestimmten Datenmodellen Ad-Hoc Querys unterstützt werden. Um das zu umgehen, werden oft die selben Daten mehrfach abgespeichert, was den Grundgedanken der Normalisierung des Modells in traditionellen Datenbanken ignoriert.
+Weitere ignorierte Faktoren, die durch die Spezialisierung auf besondere Aufgabenstellungen entsteht und Administratoren von traditionellen Datenbanken am Herzen liegen, sind u.A. der Einhaltung des \ac{ACID} Modells und der Verlust von bekannten und verinnerlichten Tools. Das macht es oft schwer, NOSQL Datenbanken neu in bereits etablierten Umgebungen einzuführen, insbesondere da die Änderung von Maxime stets mit Skepsis verbunden ist.
+
+Im Idealfall werden NOSQL Datenbanken parallel mit relationalen Datenbanken verwendet, wobei auch dieses Vorgehen durch Konsistenz und Ausfalls-Verhalten eingeschränkt und erschwert wird. Und mit Steigerung der Komplexität der gesamten Architektur von Anwendungen steigt auch die Möglichkeit von Fehlern. Da \ac{OLTP} Anwendungen, besonders wenn Rechnungs- oder Bankdaten bearbeitet werden, meist auf relationalen Datenbanken und ihren Stärken basieren, konzentriert sich diese Arbeit in der praktischen Analyse auf Methoden zur Implementierung des dynamischen Datenmodells in relationalen Datenbanken. Mit genügend Planung und wenn der Verwendungszweck nicht perfekte Konsistenz erlaubt, würden sich insbesondere Wide-Column- und Key-Value-Stores auch für die Aufgabenstellung qualifizieren.
+
+% Key-value
+%  
+
+% Immer dieses Web + BigData -> Krass voll schwer!!!
+
+% 4? Punkte für NOSQL
+
+% - Datamodel (größer Ausführen)
+
+%(kleiner behandeln)
+%- Linearilisierbarkeit / Consistency 
+%- Partitionierung
+%- CAP Principle
+
+%=> für uns interessant: column family store, document store => ABER: weder sql noch transactionen => Nur als Vergleich betrachten (neu = besser?)
+
+% Vermeidung von pro-innovation bias
+
+\section{NewSQL}
+
+Ein weiterer Begriff, der sich in den 2010er Jahren etablierte, ist NewSQL. Unter diesem Schlagwort werden alle Datenbanken eingegliedert, die Lehren aus den neuen Technologien der NOSQL Datenbanken ziehen, selbst aber wie relationale Datenbanken agieren. Da NOSQL für Not Only SQL steht, ist NewSQL eine Unterkategorie von NOSQL. 
+Stonebraker \cite{MichaelStonebraker.2011} identifiziert zwei Anwendungsgebiete von New SQL. Zum einen Anwendungen, die extreme Datenmengen verarbeiten müssen, aber nicht auf Features wie SQL als Abfragesprache und die ACID Eigenschaften von Transaktionen verzichten wollen. Dazu gehören typische BigData Szenarien wie z.B. Webanwendungen mit extrem vielen Benutzern und Transaktionen pro Minute.
+ 
+Der andere Fall sind Anwendungen, die sowohl analytische als auch transaktionale Use-Cases unterstützen sollen. Systeme dieser Art, die \ac{OLTP} und \ac{OLAP} verbinden, werden auch \ac{HTAP} genannt. Sie ermöglichen die Echtzeitanalyse von Geschäftsdaten. Diese Anforderung lässt sich auf verschiedenen Wegen implementieren. Giceva und Sadoghi \cite{Giceva.2018} identifizierten zwei Kernpunkte, in denen sich HTAP Systeme unterscheiden können. Als erstes bei Datenrepräsentation, d.h. der Einsatz von entweder Row- oder Columnstores oder eine Kombination der beiden. Und zum anderen bei Daten Replikation, insbesondere ob nur eine oder mehrere Kopien der Daten im physikalischen Speicher vorliegt.
+
+Diese beiden Szenarien treffen jedoch nicht genau unsere Problemstellung. Trotzdem gäbe es interessante Kandidaten. Insbesondere In-Memory Stores, d.h. Datenbanken, die einen Teil der Daten in flüchtigen und dadurch in besonders schnellen Speicher hält, könnten den der benötigten Unterschied für eine akzeptable  Performance ausmachen. Diese Datenbanken haben dadurch jedoch auch größere Anforderungen an die benötigte Hardware, besonders bei der Menge an Arbeitsspeicher. 
+Da die verfügbare Testmaschine nicht diese Anforderungen erfüllen konnte, wurden In-Memory Datenbanken nicht weiter in Erwägung gezogen.
+
+%Außerdem:
+
+%- In Memory DBs
+%- Column based Storage
+%- Apache Drill
+
+
+ 
