@@ -1,6 +1,7 @@
 package de.eposcat.master.generators;
 
 import ch.qos.logback.classic.Level;
+import de.eposcat.master.UseCasePerformanceHolder;
 import de.eposcat.master.approachImpl.IDatabaseAdapter;
 import de.eposcat.master.generators.data.FillerAttributesStats;
 import de.eposcat.master.generators.data.PerformanceTestAttribute;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.shaded.com.google.common.collect.Lists;
 
@@ -37,9 +39,12 @@ import static org.junit.jupiter.api.Assertions.fail;
 @Testcontainers
 public class CommonCaseSetup extends PerformanceTestContainerStartup {
 
-    private static final Logger log = LoggerFactory.getLogger(CommonCaseSetup.class);
+    private static final UseCasePerformanceHolder holder = new UseCasePerformanceHolder();
 
-    private static final Database databaseApplication = Database.DA_POSTGRES;
+    private static final Logger log = LoggerFactory.getLogger(CommonCaseSetup.class);
+    private static final Logger performanceLog = LoggerFactory.getLogger("resultLogger");
+
+    private static final Database databaseApplication = Database.DA_ORACLE;
 
     private static final String TEST_CASE_NAME = "Best Case Scenario";
     private static final int NUMBER_OF_START_ENTITIES = 100000;
@@ -54,6 +59,8 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup {
 
     @BeforeAll
     static void setupData() throws SQLException {
+
+
         getContainer(databaseApplication).start();
         assertThat(getContainer(databaseApplication).isRunning(), is(true));
         log.info("Container is running. Generating initial data for JSON and EAV approach.");
@@ -85,6 +92,8 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup {
     @Test
     public void simplePerformanceTest() {
         for (String approachName : ADAPTERS_MAP.keySet()) {
+            MDC.put("approach", "" + databaseApplication + approachName + "TenThousand");
+            holder.clear();
             log.info("!!TestCase: {}, Approach: {}", TEST_CASE_NAME, approachName);
             for (int i = 0; i < 6; i++) {
                 if (i == 5) {
@@ -100,6 +109,12 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup {
                     changeSingleBigAttributeTest(ADAPTERS_MAP.get(approachName), approachName);
 //              }
             }
+
+            log.info("+++++++++++++++");
+            log.info(holder.toString());
+            log.info("+++++++++++++++");
+
+            performanceLog.warn(holder.toCSVEntry());
         }
     }
 
@@ -117,6 +132,7 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup {
             Page page = adapter.createPage("attributeChangeTestPage");
             endTime = System.currentTimeMillis();
             log.info("Finished creating empty test page, duration: {} ms", endTime - startTime);
+            holder.setCreatePage(endTime - startTime);
 
             Map<String, Attribute> newAttributes = new HashMap<>();
             for (int i = 0; i < MEAN_NUMBER_OF_ATTRIBUTES; i++) {
@@ -135,11 +151,13 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup {
             adapter.updatePage(page);
             endTime = System.currentTimeMillis();
             log.info("++Finished changing single attribute value, approach: {}, duration: {} ms", approach, endTime - startTime);
+            holder.setUpdatePage(endTime - startTime);
 
             startTime = System.currentTimeMillis();
             adapter.deletePage(page.getId());
             endTime = System.currentTimeMillis();
             log.info("Finished deleting the test page, duration: {} ms", endTime - startTime);
+            holder.setDeletePage(endTime - startTime);
         } catch (SQLException e) {
             log.error("Failed to execute changes");
             log.error(e.getMessage());
@@ -157,6 +175,7 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup {
             dbAdapter.findPagesByAttributeName("fiftyPercent");
             endTime = System.currentTimeMillis();
             log.info("Finished finding 100 pages with with attribute 'fiftyPercent', duration: {} ms", endTime - startTime);
+            holder.setFindByAttribute(endTime - startTime);
 
 
         } catch (SQLException e) {
@@ -180,6 +199,7 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup {
             endTime = System.currentTimeMillis();
 
             log.info("Finished finding 100 pages with with attribute 'fiftyPercent' and value {}, duration: {} ms", value, endTime - startTime);
+            holder.setFindByValue(endTime - startTime);
         } catch (SQLException e) {
             log.error("Failed to execute changes");
             log.error(e.getMessage());
@@ -221,6 +241,7 @@ public class CommonCaseSetup extends PerformanceTestContainerStartup {
             adapter.updatePage(page);
             endTime = System.currentTimeMillis();
             log.info("++Finished changing big attribute value, approach: {}, duration: {} ms", approach, endTime - startTime);
+            holder.setChangeBigAttribute(endTime - startTime);
 
             startTime = System.currentTimeMillis();
             adapter.deletePage(page.getId());

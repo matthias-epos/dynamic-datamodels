@@ -21,6 +21,26 @@
         </encoder>
     </appender>
 
+    <appender name="SIFT" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <!-- in the absence of the class attribute, it is assumed that the
+             desired discriminator type is
+             ch.qos.logback.classic.sift.MDCBasedDiscriminator -->
+        <discriminator>
+            <key>approach</key>
+            <defaultValue>unknown</defaultValue>
+        </discriminator>
+        <sift>
+            <appender name="FILE-${approach}" class="ch.qos.logback.core.FileAppender">
+                <file>logs/${approach}.log</file>
+                <append>true</append>
+                <encoder>
+                    <pattern>%msg%n</pattern>
+                </encoder>
+            </appender>
+        </sift>
+    </appender>
+
+
     <!--    <appender name="SQL-to-file" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
     <!--        <file>logs/sql.log</file>-->
     <!--        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">-->
@@ -33,6 +53,10 @@
     <!--            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n</pattern>-->
     <!--        </encoder>-->
     <!--    </appender>-->
+
+    <logger name="resultLogger" additivity="false" level="debug">
+        <appender-ref ref="SIFT"/>
+    </logger>
 
     <logger name="de.eposcat.master.approachImpl" additivity="false" level="warn">
         <!--        <appender-ref ref="SQL-to-file"/>-->
